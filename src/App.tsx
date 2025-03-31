@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Unauthorized from "./pages/Unauthorized";
 import DiscordCallback from "./pages/DiscordCallback";
+import DiscordSetup from "./pages/DiscordSetup";
+import DiscordSetupGuard from "./components/auth/DiscordSetupGuard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,14 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/auth/discord/callback" element={<DiscordCallback />} />
+            <Route 
+              path="/discord-setup" 
+              element={
+                <DiscordSetupGuard>
+                  <DiscordSetup />
+                </DiscordSetupGuard>
+              } 
+            />
             <Route path="/team" element={<TeamPage />} />
             <Route path="/qualifications" element={<QualificationsPage />} />
             <Route path="/qualification/:id" element={<QualificationDetail />} />

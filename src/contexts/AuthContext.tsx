@@ -27,11 +27,9 @@ const AuthContext = createContext<AuthContextType>({
   isAuthorized: () => false,
 });
 
-// List of authorized Discord user IDs
-const AUTHORIZED_USER_IDS = [
-  // Add your authorized Discord user IDs here
-  // Example: "123456789012345678"
-];
+// Local storage keys
+const AUTHORIZED_USERS_KEY = 'discord_authorized_users';
+const CLIENT_ID_KEY = 'discord_client_id';
 
 // Define the provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -40,7 +38,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to check if a user is authorized
   const isAuthorized = (user: User): boolean => {
-    return AUTHORIZED_USER_IDS.includes(user.id);
+    const authorizedUsersString = localStorage.getItem(AUTHORIZED_USERS_KEY);
+    if (!authorizedUsersString) return false;
+    
+    // Split by newlines, commas, or spaces to handle different formats
+    const authorizedUsers = authorizedUsersString.split(/[\n,\s]+/).filter(id => id.trim());
+    return authorizedUsers.includes(user.id);
   };
 
   // Load user from localStorage on mount
@@ -60,11 +63,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Redirect to Discord OAuth page
   const login = () => {
-    const CLIENT_ID = "YOUR_DISCORD_CLIENT_ID"; // Replace with your Discord application client ID
+    const clientId = localStorage.getItem(CLIENT_ID_KEY);
+    
+    if (!clientId) {
+      toast.error("Discord Client ID not configured. Please complete the setup first.");
+      return;
+    }
+    
     const REDIRECT_URI = `${window.location.origin}/auth/discord/callback`;
     const SCOPE = "identify";
     
-    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${SCOPE}`;
+    const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${SCOPE}`;
     
     window.location.href = discordAuthUrl;
   };
