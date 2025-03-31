@@ -18,6 +18,7 @@ const Navbar = () => {
     { text: 'Home', href: '/' },
     { text: 'Team', href: '/team' },
     { text: 'Qualifications', href: '/qualifications' },
+    { text: 'Begin Training', href: '/begin-training' },
     { text: 'Contact', href: '/contact' },
   ];
 

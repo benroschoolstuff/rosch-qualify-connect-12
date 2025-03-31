@@ -3,6 +3,9 @@ import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/shared/Hero';
 import QualificationCard, { QualificationProps } from '@/components/shared/QualificationCard';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Send } from 'lucide-react';
 
 const qualifications: QualificationProps[] = [
   {
@@ -66,12 +69,17 @@ const QualificationsPage = () => {
       <section className="section-container">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-rosch-DEFAULT mb-4">Available Training Programs</h2>
-          <p className="max-w-3xl mx-auto">
+          <p className="max-w-3xl mx-auto mb-6">
             Each of our qualifications is carefully designed to meet the unique needs of different educational roles. Explore our offerings below to find the perfect program for your professional development.
           </p>
+          <Button asChild size="lg" className="mx-auto">
+            <Link to="/begin-training" className="flex items-center gap-2">
+              Apply For Training <Send size={16} />
+            </Link>
+          </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
           {qualifications.map((qual) => (
             <QualificationCard key={qual.id} {...qual} />
           ))}
@@ -108,6 +116,14 @@ const QualificationsPage = () => {
                   <span>Ongoing community support</span>
                 </li>
               </ul>
+              
+              <div className="mt-8">
+                <Button asChild>
+                  <Link to="/contact" className="flex items-center gap-2">
+                    Contact Us For More Info
+                  </Link>
+                </Button>
+              </div>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h3 className="text-2xl font-bold text-rosch-DEFAULT mb-4">Certification Process</h3>
@@ -118,6 +134,14 @@ const QualificationsPage = () => {
                 <li>Receive digital certification</li>
                 <li>Join alumni network</li>
               </ol>
+              
+              <div className="mt-8">
+                <Button asChild>
+                  <Link to="/begin-training">
+                    Apply For Training
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

@@ -58,14 +58,7 @@ const App = () => (
               <Route path="/team" element={<TeamPage />} />
               <Route path="/qualifications" element={<QualificationsPage />} />
               <Route path="/qualification/:id" element={<QualificationDetail />} />
-              <Route 
-                path="/begin-training" 
-                element={
-                  <ProtectedRoute>
-                    <BeginTraining />
-                  </ProtectedRoute>
-                } 
-              />
+              <Route path="/begin-training" element={<BeginTraining />} />
               <Route 
                 path="/admin" 
                 element={
