@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/shared/Hero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,12 +8,72 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { toast } from '@/hooks/use-toast';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Send } from 'lucide-react';
+
+// Define the form schema with zod
+const formSchema = z.object({
+  firstName: z.string().min(2, { message: "First name must be at least 2 characters" }),
+  lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  institution: z.string().optional(),
+  role: z.string().min(2, { message: "Please enter your current role" }),
+  qualification: z.string({ required_error: "Please select a qualification" }),
+  message: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const BeginTraining = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // In a real application, this would handle the form submission
-    alert("Thank you for your interest! We'll contact you soon with more information about your selected qualification.");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      institution: '',
+      role: '',
+      qualification: '',
+      message: '',
+    },
+  });
+
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    
+    // Simulate sending data to a server with a timeout
+    try {
+      console.log("Form data submitted:", data);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Success notification
+      toast({
+        title: "Application submitted successfully!",
+        description: "Thank you for your interest. We'll contact you soon with more information.",
+      });
+      
+      // Reset form
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      
+      // Error notification
+      toast({
+        title: "Submission failed",
+        description: "There was a problem submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -80,57 +140,140 @@ const BeginTraining = () => {
                 <CardTitle className="text-rosch-DEFAULT">Express Your Interest</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" required />
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" required />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="institution">Institution/School</Label>
-                    <Input id="institution" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Current Role</Label>
-                    <Input id="role" required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="qualification">Interested Qualification</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a qualification" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="roblox-teacher">Roblox Teacher Qualification</SelectItem>
-                        <SelectItem value="inclusion-officer">Inclusion Officer Certification</SelectItem>
-                        <SelectItem value="behavioral-staff">Behavioral Staff Training</SelectItem>
-                        <SelectItem value="advanced-roblox">Advanced Roblox Curriculum Design</SelectItem>
-                        <SelectItem value="digital-literacy">Digital Literacy Through Roblox</SelectItem>
-                        <SelectItem value="leadership">Educational Leadership in Virtual Environments</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Additional Information</Label>
-                    <Textarea id="message" placeholder="Tell us about your experience and goals" />
-                  </div>
-                  
-                  <Button type="submit" className="w-full btn-primary">Submit Your Interest</Button>
-                </form>
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="institution"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Institution/School</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Role</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="qualification"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Interested Qualification</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a qualification" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="roblox-teacher">Roblox Teacher Qualification</SelectItem>
+                              <SelectItem value="inclusion-officer">Inclusion Officer Certification</SelectItem>
+                              <SelectItem value="behavioral-staff">Behavioral Staff Training</SelectItem>
+                              <SelectItem value="advanced-roblox">Advanced Roblox Curriculum Design</SelectItem>
+                              <SelectItem value="digital-literacy">Digital Literacy Through Roblox</SelectItem>
+                              <SelectItem value="leadership">Educational Leadership in Virtual Environments</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Information</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Tell us about your experience and goals" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full btn-primary"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center">
+                          Processing...
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          Submit Your Interest <Send className="ml-2 h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </div>
@@ -152,7 +295,7 @@ const BeginTraining = () => {
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-bold mb-2">How much time will I need to commit weekly?</h3>
-                  <p>Most of our programs require 3-5 hours per week of study and practical work.</p>
+                  <p>Most of our programs require 3-5 hours per day of study and practical work during the training period.</p>
                 </CardContent>
               </Card>
               
