@@ -1,4 +1,3 @@
-
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/shared/Hero';
@@ -39,24 +38,14 @@ const BeginTraining = () => {
                   <div className="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold">2</div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Consultation Call</h3>
-                  <p>Our team will contact you to discuss your goals and confirm your eligibility for the program.</p>
+                  <h3 className="text-xl font-semibold mb-2">Discord Contact</h3>
+                  <p>We'll contact you directly via Discord DM to discuss your application and next steps.</p>
                 </div>
               </div>
               
               <div className="flex">
                 <div className="flex-shrink-0 mr-4">
                   <div className="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold">3</div>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Formal Registration</h3>
-                  <p>Complete the registration process and make payment arrangements.</p>
-                </div>
-              </div>
-              
-              <div className="flex">
-                <div className="flex-shrink-0 mr-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold">4</div>
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2">Begin Your Training</h3>
