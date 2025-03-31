@@ -14,6 +14,7 @@ import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Send } from 'lucide-react';
+import { sendToDiscord } from '@/utils/webhookUtils';
 
 // Define the form schema with zod
 const formSchema = z.object({
@@ -47,12 +48,21 @@ const BeginTraining = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
-    // Simulate sending data to a server with a timeout
     try {
       console.log("Form data submitted:", data);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // First try to send the data to Discord
+      const discordSuccess = await sendToDiscord(data, 'training');
+      
+      // If Discord webhook is configured, inform the user of the result
+      if (discordSuccess) {
+        console.log("Successfully sent to Discord webhook");
+      } else {
+        console.log("Could not send to Discord - webhook may not be configured");
+      }
+      
+      // Simulate API call for backend processing (would be replaced with actual API in production)
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Success notification
       toast({

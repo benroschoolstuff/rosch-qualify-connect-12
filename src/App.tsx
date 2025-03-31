@@ -9,6 +9,7 @@ import TeamPage from "./pages/TeamPage";
 import QualificationsPage from "./pages/QualificationsPage";
 import QualificationDetail from "./pages/QualificationDetail";
 import BeginTraining from "./pages/BeginTraining";
+import AdminSettings from "./pages/AdminSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/qualifications" element={<QualificationsPage />} />
           <Route path="/qualification/:id" element={<QualificationDetail />} />
           <Route path="/begin-training" element={<BeginTraining />} />
+          <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
