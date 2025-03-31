@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import TeamPage from "./pages/TeamPage";
 import QualificationsPage from "./pages/QualificationsPage";
@@ -11,27 +13,49 @@ import QualificationDetail from "./pages/QualificationDetail";
 import BeginTraining from "./pages/BeginTraining";
 import AdminSettings from "./pages/AdminSettings";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Unauthorized from "./pages/Unauthorized";
+import DiscordCallback from "./pages/DiscordCallback";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/qualifications" element={<QualificationsPage />} />
-          <Route path="/qualification/:id" element={<QualificationDetail />} />
-          <Route path="/begin-training" element={<BeginTraining />} />
-          <Route path="/admin" element={<AdminSettings />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/auth/discord/callback" element={<DiscordCallback />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/qualifications" element={<QualificationsPage />} />
+            <Route path="/qualification/:id" element={<QualificationDetail />} />
+            <Route 
+              path="/begin-training" 
+              element={
+                <ProtectedRoute>
+                  <BeginTraining />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <AdminSettings />
+                </ProtectedRoute>
+              } 
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
