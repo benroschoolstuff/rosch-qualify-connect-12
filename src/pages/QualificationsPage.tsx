@@ -65,7 +65,7 @@ const QualificationsPage = () => {
       
       <section className="section-container">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-rosch-DEFAULT mb-4">Available Training Programs</h2>
+          <h2 className="text-3xl font-bold text-blue-900 mb-4">Available Training Programs</h2>
           <p className="max-w-3xl mx-auto">
             Each of our qualifications is carefully designed to meet the unique needs of different educational roles. Explore our offerings below to find the perfect program for your professional development.
           </p>
@@ -78,39 +78,39 @@ const QualificationsPage = () => {
         </div>
       </section>
       
-      <section className="bg-rosch-light py-16">
+      <section className="bg-blue-50 py-16">
         <div className="section-container">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-rosch-DEFAULT mb-4">Qualification Structure</h2>
+              <h2 className="text-3xl font-bold text-blue-900 mb-4">Qualification Structure</h2>
               <p className="mb-6">
                 All our training programs include:
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <span className="text-rosch-accent mr-2 font-bold">•</span>
+                  <span className="text-amber-400 mr-2 font-bold">•</span>
                   <span>Hands-on practical exercises in Roblox</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-rosch-accent mr-2 font-bold">•</span>
+                  <span className="text-amber-400 mr-2 font-bold">•</span>
                   <span>Theoretical foundations of educational technology</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-rosch-accent mr-2 font-bold">•</span>
+                  <span className="text-amber-400 mr-2 font-bold">•</span>
                   <span>Role-specific professional development</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-rosch-accent mr-2 font-bold">•</span>
+                  <span className="text-amber-400 mr-2 font-bold">•</span>
                   <span>Assessment and certification</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-rosch-accent mr-2 font-bold">•</span>
+                  <span className="text-amber-400 mr-2 font-bold">•</span>
                   <span>Ongoing community support</span>
                 </li>
               </ul>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-8">
-              <h3 className="text-2xl font-bold text-rosch-DEFAULT mb-4">Certification Process</h3>
+              <h3 className="text-2xl font-bold text-blue-900 mb-4">Certification Process</h3>
               <ol className="space-y-4 list-decimal list-inside">
                 <li>Complete all required modules</li>
                 <li>Submit practical assignments</li>

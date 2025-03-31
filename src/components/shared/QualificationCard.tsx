@@ -22,9 +22,9 @@ const QualificationCard: React.FC<QualificationProps> = ({
   forWho
 }) => {
   return (
-    <Card className="h-full card-hover border-t-4 border-t-rosch-DEFAULT">
+    <Card className="h-full card-hover border-t-4 border-t-blue-900">
       <CardHeader>
-        <CardTitle className="text-rosch-DEFAULT">{title}</CardTitle>
+        <CardTitle className="text-blue-900">{title}</CardTitle>
         <CardDescription>{forWho.join(', ')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
