@@ -1,3 +1,4 @@
+
 # Welcome to your Lovable project
 
 ## Project info
@@ -34,6 +35,32 @@ npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
+```
+
+## Docker Support
+
+This project can be run in a Docker container. Make sure you have Docker and Docker Compose installed.
+
+### Build and run with Docker Compose
+
+```sh
+# Build and start the container
+docker-compose up -d
+
+# Stop the container
+docker-compose down
+```
+
+The application will be available at http://localhost:8414
+
+### Build and run with Docker directly
+
+```sh
+# Build the Docker image
+docker build -t rosch-website .
+
+# Run the container
+docker run -p 8414:8414 rosch-website
 ```
 
 **Edit a file directly in GitHub**

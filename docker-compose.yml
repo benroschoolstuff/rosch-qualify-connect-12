@@ -1,0 +1,9 @@
+
+version: '3'
+
+services:
+  rosch-website:
+    build: .
+    ports:
+      - "8414:8414"
+    restart: unless-stopped
