@@ -9,7 +9,7 @@ const qualifications: QualificationProps[] = [
     id: 'roblox-teacher',
     title: 'Roblox Teacher Qualification',
     description: 'Learn to effectively use Roblox as an educational tool in the classroom environment. This comprehensive program covers curriculum integration, lesson planning, and student engagement strategies.',
-    duration: '8 weeks',
+    duration: '4 days',
     level: 'Intermediate',
     forWho: ['Teachers', 'Educators']
   },
@@ -17,7 +17,7 @@ const qualifications: QualificationProps[] = [
     id: 'inclusion-officer',
     title: 'Inclusion Officer Certification',
     description: 'Develop strategies for inclusive education using Roblox for diverse learning needs. Focus on accessibility, differentiated instruction, and creating supportive virtual learning environments.',
-    duration: '10 weeks',
+    duration: '4 days',
     level: 'Advanced',
     forWho: ['Inclusion Officers', 'Special Education Teachers']
   },
@@ -25,7 +25,7 @@ const qualifications: QualificationProps[] = [
     id: 'behavioral-staff',
     title: 'Behavioral Staff Training',
     description: 'Master behavioral management techniques using Roblox as an engagement tool. Learn to create structured environments that support positive behavior and social-emotional development.',
-    duration: '6 weeks',
+    duration: '4 days',
     level: 'Beginner to Intermediate',
     forWho: ['Pastoral Staff', 'Behavioral Specialists']
   },
@@ -33,7 +33,7 @@ const qualifications: QualificationProps[] = [
     id: 'advanced-roblox',
     title: 'Advanced Roblox Curriculum Design',
     description: 'For experienced educators who want to take their Roblox teaching to the next level. Learn to design comprehensive curricula and assessment strategies using the platform.',
-    duration: '12 weeks',
+    duration: '4 days',
     level: 'Advanced',
     forWho: ['Experienced Teachers', 'Curriculum Designers']
   },
@@ -41,7 +41,7 @@ const qualifications: QualificationProps[] = [
     id: 'digital-literacy',
     title: 'Digital Literacy Through Roblox',
     description: 'Teach essential digital literacy skills through engaging Roblox activities. Perfect for educators looking to integrate technology skills into their broader curriculum.',
-    duration: '4 weeks',
+    duration: '4 days',
     level: 'Beginner',
     forWho: ['All Educators', 'Technology Teachers']
   },
@@ -49,7 +49,7 @@ const qualifications: QualificationProps[] = [
     id: 'leadership',
     title: 'Educational Leadership in Virtual Environments',
     description: 'Designed for school leaders who want to implement Roblox-based programs across their institution. Focus on strategy, staff development, and measuring outcomes.',
-    duration: '8 weeks',
+    duration: '4 days',
     level: 'Advanced',
     forWho: ['School Leaders', 'Department Heads', 'Administrators']
   }
