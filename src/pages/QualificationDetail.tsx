@@ -69,7 +69,7 @@ const qualificationsData = {
       'Create structured, predictable virtual environments',
       'Implement positive reinforcement strategies',
       'Address challenging behaviors effectively',
-      'Develop students' social and emotional skills'
+      'Develop students\' social and emotional skills'
     ]
   },
   'advanced-roblox': {
@@ -107,10 +107,10 @@ const qualificationsData = {
     ],
     outcomes: [
       'Teach digital citizenship through Roblox activities',
-      'Develop students' critical assessment of digital content',
+      'Develop students\' critical assessment of digital content',
       'Guide creative production using platform tools',
       'Integrate digital literacy across curriculum areas',
-      'Assess students' digital competencies'
+      'Assess students\' digital competencies'
     ]
   },
   'leadership': {
