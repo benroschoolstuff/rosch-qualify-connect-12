@@ -11,15 +11,15 @@ const qualificationsData = {
   'roblox-teacher': {
     title: 'Roblox Teacher Qualification',
     description: 'A comprehensive training program for educators looking to integrate Roblox into their teaching practices.',
-    duration: '4 days',
+    duration: '8 weeks',
     level: 'Intermediate',
     forWho: ['Teachers', 'Educators'],
     modules: [
-      { title: 'Introduction to Roblox for Education', days: 1 },
-      { title: 'Designing Learning Experiences in Roblox', days: 1 },
-      { title: 'Assessment Strategies and Tools', days: 1 },
-      { title: 'Classroom Management in Virtual Environments', days: 0.5 },
-      { title: 'Final Project and Certification', days: 0.5 }
+      { title: 'Introduction to Roblox for Education', weeks: 1 },
+      { title: 'Designing Learning Experiences in Roblox', weeks: 2 },
+      { title: 'Assessment Strategies and Tools', weeks: 2 },
+      { title: 'Classroom Management in Virtual Environments', weeks: 1 },
+      { title: 'Final Project and Certification', weeks: 2 }
     ],
     outcomes: [
       'Design and implement curriculum-aligned Roblox activities',
@@ -32,15 +32,15 @@ const qualificationsData = {
   'inclusion-officer': {
     title: 'Inclusion Officer Certification',
     description: 'Specialized training for inclusion and special education professionals using Roblox to support diverse learners.',
-    duration: '5 days',
+    duration: '10 weeks',
     level: 'Advanced',
     forWho: ['Inclusion Officers', 'Special Education Teachers'],
     modules: [
-      { title: 'Accessibility Features in Roblox', days: 1 },
-      { title: 'Adapting Environments for Diverse Needs', days: 1 },
-      { title: 'Supporting Social Interactions', days: 1 },
-      { title: 'Differentiated Instruction Strategies', days: 1 },
-      { title: 'Case Studies and Certification', days: 1 }
+      { title: 'Accessibility Features in Roblox', weeks: 2 },
+      { title: 'Adapting Environments for Diverse Needs', weeks: 2 },
+      { title: 'Supporting Social Interactions', weeks: 2 },
+      { title: 'Differentiated Instruction Strategies', weeks: 2 },
+      { title: 'Case Studies and Certification', weeks: 2 }
     ],
     outcomes: [
       'Configure Roblox environments for accessibility',
@@ -53,37 +53,37 @@ const qualificationsData = {
   'behavioral-staff': {
     title: 'Behavioral Staff Training',
     description: 'Training program focused on using Roblox as a tool for positive behavioral support and development.',
-    duration: '3 days',
+    duration: '6 weeks',
     level: 'Beginner to Intermediate',
     forWho: ['Pastoral Staff', 'Behavioral Specialists'],
     modules: [
-      { title: 'Roblox Basics for Behavioral Support', days: 0.5 },
-      { title: 'Creating Structured Virtual Environments', days: 0.5 },
-      { title: 'Positive Reinforcement Systems', days: 0.5 },
-      { title: 'Managing Challenging Behaviors', days: 0.5 },
-      { title: 'Social Skills Development', days: 0.5 },
-      { title: 'Implementation and Certification', days: 0.5 }
+      { title: 'Roblox Basics for Behavioral Support', weeks: 1 },
+      { title: 'Creating Structured Virtual Environments', weeks: 1 },
+      { title: 'Positive Reinforcement Systems', weeks: 1 },
+      { title: 'Managing Challenging Behaviors', weeks: 1 },
+      { title: 'Social Skills Development', weeks: 1 },
+      { title: 'Implementation and Certification', weeks: 1 }
     ],
     outcomes: [
       'Design behavior management systems using Roblox',
       'Create structured, predictable virtual environments',
       'Implement positive reinforcement strategies',
       'Address challenging behaviors effectively',
-      'Develop students\' social and emotional skills'
+      'Develop students' social and emotional skills'
     ]
   },
   'advanced-roblox': {
     title: 'Advanced Roblox Curriculum Design',
     description: 'For experienced educators who want to take their Roblox teaching to the next level with comprehensive curriculum design.',
-    duration: '5 days',
+    duration: '12 weeks',
     level: 'Advanced',
     forWho: ['Experienced Teachers', 'Curriculum Designers'],
     modules: [
-      { title: 'Advanced Roblox Features for Education', days: 1 },
-      { title: 'Curriculum Mapping and Integration', days: 1 },
-      { title: 'Advanced Assessment Design', days: 1 },
-      { title: 'Research-Based Practices', days: 1 },
-      { title: 'Capstone Project and Certification', days: 1 }
+      { title: 'Advanced Roblox Features for Education', weeks: 2 },
+      { title: 'Curriculum Mapping and Integration', weeks: 3 },
+      { title: 'Advanced Assessment Design', weeks: 2 },
+      { title: 'Research-Based Practices', weeks: 2 },
+      { title: 'Capstone Project and Certification', weeks: 3 }
     ],
     outcomes: [
       'Design comprehensive, standards-aligned curricula',
@@ -96,35 +96,35 @@ const qualificationsData = {
   'digital-literacy': {
     title: 'Digital Literacy Through Roblox',
     description: 'A focused program for teaching essential digital skills through engaging Roblox activities.',
-    duration: '2 days',
+    duration: '4 weeks',
     level: 'Beginner',
     forWho: ['All Educators', 'Technology Teachers'],
     modules: [
-      { title: 'Digital Citizenship Fundamentals', days: 0.5 },
-      { title: 'Critical Thinking in Virtual Worlds', days: 0.5 },
-      { title: 'Creative Production Skills', days: 0.5 },
-      { title: 'Implementation and Certification', days: 0.5 }
+      { title: 'Digital Citizenship Fundamentals', weeks: 1 },
+      { title: 'Critical Thinking in Virtual Worlds', weeks: 1 },
+      { title: 'Creative Production Skills', weeks: 1 },
+      { title: 'Implementation and Certification', weeks: 1 }
     ],
     outcomes: [
       'Teach digital citizenship through Roblox activities',
-      'Develop students\' critical assessment of digital content',
+      'Develop students' critical assessment of digital content',
       'Guide creative production using platform tools',
       'Integrate digital literacy across curriculum areas',
-      'Assess students\' digital competencies'
+      'Assess students' digital competencies'
     ]
   },
   'leadership': {
     title: 'Educational Leadership in Virtual Environments',
     description: 'Strategic program for school leaders implementing Roblox across their institution.',
-    duration: '4 days',
+    duration: '8 weeks',
     level: 'Advanced',
     forWho: ['School Leaders', 'Department Heads', 'Administrators'],
     modules: [
-      { title: 'Strategic Vision for Educational Technology', days: 0.5 },
-      { title: 'Implementation Planning', days: 1 },
-      { title: 'Staff Development and Support', days: 1 },
-      { title: 'Measuring Impact and Outcomes', days: 1 },
-      { title: 'Strategic Project and Certification', days: 0.5 }
+      { title: 'Strategic Vision for Educational Technology', weeks: 1 },
+      { title: 'Implementation Planning', weeks: 2 },
+      { title: 'Staff Development and Support', weeks: 2 },
+      { title: 'Measuring Impact and Outcomes', weeks: 2 },
+      { title: 'Strategic Project and Certification', weeks: 1 }
     ],
     outcomes: [
       'Develop strategic plans for Roblox implementation',
@@ -154,12 +154,12 @@ const QualificationDetail = () => {
       <section className="section-container">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold text-[#0A3161] mb-6">Program Overview</h2>
+            <h2 className="text-2xl font-bold text-rosch-DEFAULT mb-6">Program Overview</h2>
             <p className="mb-8">
               {qualification.description} This qualification is specifically designed for {qualification.forWho.join(', ')} who want to enhance their professional skills in using Roblox as an educational platform.
             </p>
             
-            <h3 className="text-xl font-bold text-[#0A3161] mb-4">Program Modules</h3>
+            <h3 className="text-xl font-bold text-rosch-DEFAULT mb-4">Program Modules</h3>
             <div className="space-y-4 mb-8">
               {qualification.modules.map((module, index) => (
                 <Card key={index}>
@@ -168,18 +168,18 @@ const QualificationDetail = () => {
                       <h4 className="font-medium">{module.title}</h4>
                     </div>
                     <div className="text-sm text-gray-500">
-                      {module.days === 0.5 ? 'Half day' : module.days === 1 ? '1 day' : `${module.days} days`}
+                      {module.weeks} {module.weeks > 1 ? 'weeks' : 'week'}
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
             
-            <h3 className="text-xl font-bold text-[#0A3161] mb-4">Learning Outcomes</h3>
+            <h3 className="text-xl font-bold text-rosch-DEFAULT mb-4">Learning Outcomes</h3>
             <ul className="space-y-2 mb-8">
               {qualification.outcomes.map((outcome, index) => (
                 <li key={index} className="flex items-start">
-                  <span className="text-[#D4AF37] mr-2 font-bold">•</span>
+                  <span className="text-rosch-accent mr-2 font-bold">•</span>
                   <span>{outcome}</span>
                 </li>
               ))}
@@ -189,7 +189,7 @@ const QualificationDetail = () => {
           <div>
             <Card className="sticky top-8">
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-[#0A3161] mb-4">Program Details</h3>
+                <h3 className="text-xl font-bold text-rosch-DEFAULT mb-4">Program Details</h3>
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium text-gray-500">Duration</h4>

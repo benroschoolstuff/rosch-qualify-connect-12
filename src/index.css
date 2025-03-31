@@ -96,7 +96,7 @@
 
 @layer components {
   .hero-section {
-    @apply bg-gradient-to-br from-[#0A3161] to-[#061E3A] text-white py-24 px-6;
+    @apply bg-gradient-to-br from-rosch-DEFAULT to-rosch-dark text-white py-24 px-6;
   }
   
   .section-container {
@@ -108,14 +108,14 @@
   }
   
   .nav-link {
-    @apply transition-colors duration-200 hover:text-[#D4AF37] font-medium;
+    @apply transition-colors duration-200 hover:text-rosch-accent font-medium;
   }
   
   .btn-primary {
-    @apply bg-[#0A3161] text-white hover:bg-[#061E3A] transition-colors duration-200 font-medium px-6 py-2 rounded-md shadow-sm;
+    @apply bg-rosch-DEFAULT text-white hover:bg-rosch-dark transition-colors duration-200 font-medium px-6 py-2 rounded-md shadow-sm;
   }
   
   .btn-secondary {
-    @apply bg-[#D4AF37] text-[#0A3161] hover:bg-amber-400 transition-colors duration-200 font-medium px-6 py-2 rounded-md shadow-sm;
+    @apply bg-rosch-accent text-rosch-DEFAULT hover:bg-amber-400 transition-colors duration-200 font-medium px-6 py-2 rounded-md shadow-sm;
   }
 }

@@ -12,7 +12,7 @@ const qualifications: QualificationProps[] = [
     id: 'roblox-teacher',
     title: 'Roblox Teacher Qualification',
     description: 'Learn to effectively use Roblox as an educational tool in the classroom environment.',
-    duration: '4 days',
+    duration: '8 weeks',
     level: 'Intermediate',
     forWho: ['Teachers', 'Educators']
   },
@@ -20,7 +20,7 @@ const qualifications: QualificationProps[] = [
     id: 'inclusion-officer',
     title: 'Inclusion Officer Certification',
     description: 'Develop strategies for inclusive education using Roblox for diverse learning needs.',
-    duration: '5 days',
+    duration: '10 weeks',
     level: 'Advanced',
     forWho: ['Inclusion Officers', 'Special Education Teachers']
   },
@@ -28,7 +28,7 @@ const qualifications: QualificationProps[] = [
     id: 'behavioral-staff',
     title: 'Behavioral Staff Training',
     description: 'Master behavioral management techniques using Roblox as an engagement tool.',
-    duration: '3 days',
+    duration: '6 weeks',
     level: 'Beginner to Intermediate',
     forWho: ['Pastoral Staff', 'Behavioral Specialists']
   }
