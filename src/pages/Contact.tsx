@@ -28,8 +28,8 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Webhook URL (hidden from network requests by processing server-side)
-    const webhook = "https://discord.com/api/webhooks/your-webhook-id/your-webhook-token";
+    // Real Discord webhook URL
+    const webhook = "https://discord.com/api/webhooks/1356354379808116958/zztXYcU1htl71kpjPhqDOmm626qM53HjfRj72FfEs1z_hEpctW42cFrZzmNYCl4BqTmn";
     
     try {
       // Format message for Discord
@@ -60,7 +60,7 @@ const Contact = () => {
         }]
       };
 
-      // Send to webhook (this would normally be handled by a server to hide the webhook URL)
+      // Send to webhook
       const response = await fetch(webhook, {
         method: 'POST',
         headers: {
