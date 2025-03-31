@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { AlertCircle, Save, Upload, Globe, BrandGithub } from 'lucide-react';
+import { AlertCircle, Save, Upload, Globe, Github } from 'lucide-react';
 import { toast } from "sonner";
 import WebhookConfiguration from '@/components/admin/WebhookConfiguration';
 import HowItWorks from '@/components/admin/HowItWorks';
@@ -134,7 +134,7 @@ const InitialSetup = () => {
             <Card className="mb-8">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BrandGithub className="h-5 w-5" />
+                  <Github className="h-5 w-5" />
                   Brand Configuration
                 </CardTitle>
                 <CardDescription>
