@@ -9,7 +9,132 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      discord_settings: {
+        Row: {
+          allowed_admins: Json | null
+          bot_token: string | null
+          client_id: string | null
+          client_secret: string | null
+          created_at: string
+          guild_id: string | null
+          id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          allowed_admins?: Json | null
+          bot_token?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          guild_id?: string | null
+          id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          allowed_admins?: Json | null
+          bot_token?: string | null
+          client_id?: string | null
+          client_secret?: string | null
+          created_at?: string
+          guild_id?: string | null
+          id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          created_at: string
+          id: string
+          setting_name: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setting_name: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setting_name?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          bio: string
+          created_at: string
+          email: string | null
+          id: string
+          image_src: string | null
+          name: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          bio: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_src?: string | null
+          name: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          image_src?: string | null
+          name?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      waiting_list: {
+        Row: {
+          created_at: string
+          discord_id: string | null
+          email: string
+          id: string
+          message: string | null
+          name: string
+          qualification: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          discord_id?: string | null
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          qualification?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          discord_id?: string | null
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          qualification?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
