@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Check, Info, X } from 'lucide-react';
 import TeamManagement from '@/components/admin/TeamManagement';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
+
+// Type guard to check if a setting value has a 'value' property that's boolean
+function hasValueProperty(obj: any): obj is { value: boolean } {
+  return typeof obj === 'object' && obj !== null && typeof obj.value === 'boolean';
+}
 
 const Setup = () => {
   const { toast } = useToast();
@@ -39,11 +44,11 @@ const Setup = () => {
         
         if (!error && data?.setting_value) {
           // Type-safe check for the value property
-          const settingValue = data.setting_value;
+          const settingValue = data.setting_value as Json;
           let isComplete = false;
           
-          if (typeof settingValue === 'object' && settingValue !== null && 'value' in settingValue) {
-            isComplete = (settingValue as any).value === true;
+          if (hasValueProperty(settingValue)) {
+            isComplete = settingValue.value === true;
           }
           
           if (isComplete) {
@@ -213,7 +218,7 @@ const Setup = () => {
         .from('site_settings')
         .upsert({
           setting_name: 'setup_complete',
-          setting_value: { value: true }
+          setting_value: { value: true } as unknown as Json
         }, { onConflict: 'setting_name' });
       
       if (error) throw error;

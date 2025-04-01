@@ -2,12 +2,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { Json } from '@/integrations/supabase/types';
 
 interface AuthUser {
   id: string;
   username: string;
   avatar?: string;
   email?: string;
+}
+
+// Type guard to check if a setting value has a 'value' property that's boolean
+function hasValueProperty(obj: any): obj is { value: boolean } {
+  return typeof obj === 'object' && obj !== null && typeof obj.value === 'boolean';
 }
 
 export const useAuth = () => {
@@ -96,10 +102,10 @@ export const useAuth = () => {
         setSetupComplete(false);
       } else if (data?.setting_value) {
         // Check if the setting value has a 'value' property that is true
-        // Fix for the type error by safely checking the structure
-        const settingValue = data.setting_value;
-        if (typeof settingValue === 'object' && settingValue !== null && 'value' in settingValue) {
-          setSetupComplete((settingValue as any).value === true);
+        const settingValue = data.setting_value as Json;
+        
+        if (hasValueProperty(settingValue)) {
+          setSetupComplete(settingValue.value === true);
         } else {
           setSetupComplete(false);
         }
@@ -125,8 +131,11 @@ export const useAuth = () => {
         setAllowedAdmins([]);
       } else if (data?.allowed_admins) {
         // Type safety check - ensure we're working with a string array
-        if (Array.isArray(data.allowed_admins)) {
-          setAllowedAdmins(data.allowed_admins as string[]);
+        const adminList = data.allowed_admins as Json;
+        if (Array.isArray(adminList)) {
+          // Make sure every item is a string
+          const stringAdmins = adminList.filter(item => typeof item === 'string') as string[];
+          setAllowedAdmins(stringAdmins);
         } else {
           console.error('allowed_admins is not an array:', data.allowed_admins);
           setAllowedAdmins([]);

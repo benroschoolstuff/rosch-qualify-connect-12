@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 interface BrandingSettings {
   siteName: string;
@@ -42,6 +44,23 @@ const defaultSettings: BrandingSettings = {
   },
 };
 
+// Type guard to check if an object is a valid BrandingSettings
+function isBrandingSettings(obj: any): obj is BrandingSettings {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.siteName === 'string' &&
+    typeof obj.siteTagline === 'string' &&
+    typeof obj.primaryColor === 'string' &&
+    typeof obj.accentColor === 'string' &&
+    typeof obj.footerText === 'string' &&
+    typeof obj.contactEmail === 'string' &&
+    typeof obj.contactPhone === 'string' &&
+    typeof obj.socialLinks === 'object' &&
+    obj.socialLinks !== null
+  );
+}
+
 const BrandingSettings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState<BrandingSettings>(defaultSettings);
@@ -60,7 +79,12 @@ const BrandingSettings = () => {
         if (error) {
           console.error('Error loading branding settings:', error);
         } else if (data?.setting_value) {
-          setSettings(data.setting_value as BrandingSettings);
+          const settingValue = data.setting_value as Json;
+          if (isBrandingSettings(settingValue)) {
+            setSettings(settingValue);
+          } else {
+            console.error('Invalid branding settings format:', settingValue);
+          }
         }
       } catch (error) {
         console.error('Error loading branding settings:', error);
@@ -100,7 +124,7 @@ const BrandingSettings = () => {
         .from('site_settings')
         .upsert({
           setting_name: 'branding',
-          setting_value: settings
+          setting_value: settings as unknown as Json
         }, { onConflict: 'setting_name' });
       
       if (error) throw error;
@@ -134,7 +158,7 @@ const BrandingSettings = () => {
         .from('site_settings')
         .upsert({
           setting_name: 'branding',
-          setting_value: defaultSettings
+          setting_value: defaultSettings as unknown as Json
         }, { onConflict: 'setting_name' });
       
       if (error) throw error;

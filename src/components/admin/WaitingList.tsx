@@ -20,6 +20,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+type WaitingListStatus = 'new' | 'contacted' | 'accepted' | 'rejected';
+
+function isValidStatus(status: string): status is WaitingListStatus {
+  return ['new', 'contacted', 'accepted', 'rejected'].includes(status);
+}
+
 interface WaitingListEntry {
   id: string;
   name: string;
@@ -27,7 +33,7 @@ interface WaitingListEntry {
   discord_id: string | null;
   qualification: string | null;
   message: string | null;
-  status: 'new' | 'contacted' | 'accepted' | 'rejected';
+  status: WaitingListStatus;
   created_at: string;
 }
 
@@ -57,9 +63,14 @@ const WaitingList = () => {
             description: "Failed to load waiting list data. Please try again.",
             variant: "destructive",
           });
-        } else {
-          setWaitingList(data || []);
-          setFilteredList(data || []);
+        } else if (data) {
+          const typedData: WaitingListEntry[] = data.map(item => ({
+            ...item,
+            status: isValidStatus(item.status) ? item.status : 'new'
+          }));
+          
+          setWaitingList(typedData);
+          setFilteredList(typedData);
         }
       } catch (error) {
         console.error('Error loading waiting list:', error);
@@ -91,7 +102,7 @@ const WaitingList = () => {
     setFilteredList(filtered);
   }, [searchTerm, statusFilter, waitingList]);
   
-  const handleStatusChange = async (id: string, newStatus: 'new' | 'contacted' | 'accepted' | 'rejected') => {
+  const handleStatusChange = async (id: string, newStatus: WaitingListStatus) => {
     try {
       const { error } = await supabase
         .from('waiting_list')
