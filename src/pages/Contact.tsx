@@ -15,6 +15,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    discordId: '',
     qualification: '',
     message: ''
   });
@@ -48,6 +49,10 @@ const Contact = () => {
               value: formData.email || "Not provided"
             },
             {
+              name: "Discord ID",
+              value: formData.discordId || "Not provided"
+            },
+            {
               name: "Interested Qualification",
               value: formData.qualification || "Not specified"
             },
@@ -59,6 +64,20 @@ const Contact = () => {
           timestamp: new Date().toISOString()
         }]
       };
+
+      // Save to local storage for waiting list management
+      const waitingList = JSON.parse(localStorage.getItem('waitingList') || '[]');
+      waitingList.push({
+        id: Date.now().toString(),
+        name: formData.name,
+        email: formData.email,
+        discordId: formData.discordId,
+        qualification: formData.qualification,
+        message: formData.message,
+        date: new Date().toISOString(),
+        status: 'new'
+      });
+      localStorage.setItem('waitingList', JSON.stringify(waitingList));
 
       // Send to webhook
       const response = await fetch(webhook, {
@@ -79,6 +98,7 @@ const Contact = () => {
         setFormData({
           name: '',
           email: '',
+          discordId: '',
           qualification: '',
           message: ''
         });
@@ -136,6 +156,20 @@ const Contact = () => {
                       onChange={handleInputChange}
                       required
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="discordId">Discord ID (Optional)</Label>
+                    <Input 
+                      id="discordId"
+                      name="discordId"
+                      placeholder="username#0000 or User ID"
+                      value={formData.discordId}
+                      onChange={handleInputChange}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Your Discord username or ID to receive updates
+                    </p>
                   </div>
                   
                   <div className="space-y-2">
@@ -228,6 +262,20 @@ const Contact = () => {
                 <div>
                   <h3 className="text-xl font-semibold mb-2">Location</h3>
                   <p>London, United Kingdom</p>
+                </div>
+              </div>
+              
+              <div className="flex">
+                <div className="flex-shrink-0 mr-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Discord</h3>
+                  <p>Join our Discord community</p>
                 </div>
               </div>
             </div>
