@@ -2,7 +2,7 @@
 version: '3.8'
 
 services:
-  rosch-web:
+  rosch-qualify-DEVPROD:
     build: .
     ports:
       - "8418:8418"
