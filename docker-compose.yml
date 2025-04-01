@@ -5,7 +5,7 @@ services:
   rosch-web:
     build: .
     ports:
-      - "8414:8414"
+      - "8418:8418"
     volumes:
       - config-data:/app/config
     restart: unless-stopped
