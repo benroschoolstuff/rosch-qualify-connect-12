@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Table,
@@ -18,37 +17,60 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface WaitingListEntry {
   id: string;
   name: string;
   email: string;
-  discordId: string;
-  qualification: string;
-  message: string;
-  date: string;
+  discord_id: string | null;
+  qualification: string | null;
+  message: string | null;
   status: 'new' | 'contacted' | 'accepted' | 'rejected';
+  created_at: string;
 }
 
 const WaitingList = () => {
+  const { toast } = useToast();
   const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
   const [filteredList, setFilteredList] = useState<WaitingListEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEntry, setSelectedEntry] = useState<WaitingListEntry | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Load waiting list from localStorage
   useEffect(() => {
-    const storedList = localStorage.getItem('waitingList');
-    if (storedList) {
-      const parsedList = JSON.parse(storedList) as WaitingListEntry[];
-      setWaitingList(parsedList);
-      setFilteredList(parsedList);
-    }
-  }, []);
+    const loadWaitingList = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('waiting_list')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error loading waiting list:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load waiting list data. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          setWaitingList(data || []);
+          setFilteredList(data || []);
+        }
+      } catch (error) {
+        console.error('Error loading waiting list:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadWaitingList();
+  }, [toast]);
   
-  // Filter list when search term or status filter changes
   useEffect(() => {
     let filtered = waitingList;
     
@@ -57,7 +79,7 @@ const WaitingList = () => {
         return (
           entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           entry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          entry.discordId.toLowerCase().includes(searchTerm.toLowerCase())
+          (entry.discord_id && entry.discord_id.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       });
     }
@@ -69,16 +91,40 @@ const WaitingList = () => {
     setFilteredList(filtered);
   }, [searchTerm, statusFilter, waitingList]);
   
-  const handleStatusChange = (id: string, newStatus: 'new' | 'contacted' | 'accepted' | 'rejected') => {
-    const updatedList = waitingList.map(entry => {
-      if (entry.id === id) {
-        return { ...entry, status: newStatus };
+  const handleStatusChange = async (id: string, newStatus: 'new' | 'contacted' | 'accepted' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('waiting_list')
+        .update({ status: newStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      const updatedList = waitingList.map(entry => {
+        if (entry.id === id) {
+          return { ...entry, status: newStatus };
+        }
+        return entry;
+      });
+      
+      setWaitingList(updatedList);
+      
+      if (selectedEntry && selectedEntry.id === id) {
+        setSelectedEntry({ ...selectedEntry, status: newStatus });
       }
-      return entry;
-    });
-    
-    setWaitingList(updatedList);
-    localStorage.setItem('waitingList', JSON.stringify(updatedList));
+      
+      toast({
+        title: "Status updated",
+        description: `Entry status has been updated to ${newStatus}.`,
+      });
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleViewDetails = (entry: WaitingListEntry) => {
@@ -109,6 +155,44 @@ const WaitingList = () => {
       year: 'numeric'
     });
   };
+  
+  const handleExportCSV = () => {
+    const headers = ['Date', 'Name', 'Email', 'Discord ID', 'Qualification', 'Status', 'Message'];
+    
+    const csvRows = [
+      headers.join(','),
+      ...filteredList.map(entry => {
+        const qualification = entry.qualification 
+          ? entry.qualification
+              .split("-")
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")
+          : '';
+        
+        const message = entry.message ? `"${entry.message.replace(/"/g, '""')}"` : '';
+        
+        return [
+          formatDate(entry.created_at),
+          entry.name,
+          entry.email,
+          entry.discord_id || '',
+          qualification,
+          entry.status,
+          message
+        ].join(',');
+      })
+    ].join('\n');
+    
+    const blob = new Blob([csvRows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `waiting-list-export-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div>
@@ -135,11 +219,20 @@ const WaitingList = () => {
             <option value="rejected">Rejected</option>
           </select>
           
-          <Button variant="outline">Export CSV</Button>
+          <Button variant="outline" onClick={handleExportCSV}>
+            Export CSV
+          </Button>
         </div>
       </div>
       
-      {filteredList.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium text-gray-900">Loading...</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Please wait while we fetch the waiting list data.
+          </p>
+        </div>
+      ) : filteredList.length === 0 ? (
         <div className="text-center py-12">
           <h3 className="text-lg font-medium text-gray-900">No waiting list entries found</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -165,10 +258,10 @@ const WaitingList = () => {
             <TableBody>
               {filteredList.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell>{formatDate(entry.date)}</TableCell>
+                  <TableCell>{formatDate(entry.created_at)}</TableCell>
                   <TableCell>{entry.name}</TableCell>
                   <TableCell>{entry.email}</TableCell>
-                  <TableCell>{entry.discordId || "—"}</TableCell>
+                  <TableCell>{entry.discord_id || "—"}</TableCell>
                   <TableCell>
                     {entry.qualification ? (
                       entry.qualification
@@ -230,7 +323,7 @@ const WaitingList = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Date</p>
-                  <p className="mt-1">{formatDate(selectedEntry.date)}</p>
+                  <p className="mt-1">{formatDate(selectedEntry.created_at)}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Status</p>
@@ -248,10 +341,10 @@ const WaitingList = () => {
                 <p className="mt-1">{selectedEntry.email}</p>
               </div>
               
-              {selectedEntry.discordId && (
+              {selectedEntry.discord_id && (
                 <div>
                   <p className="text-sm font-medium text-gray-500">Discord ID</p>
-                  <p className="mt-1">{selectedEntry.discordId}</p>
+                  <p className="mt-1">{selectedEntry.discord_id}</p>
                 </div>
               )}
               
@@ -287,25 +380,21 @@ const WaitingList = () => {
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => {
                       handleStatusChange(selectedEntry.id, 'new');
-                      setSelectedEntry({...selectedEntry, status: 'new'});
                     }}>
                       Mark as New
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       handleStatusChange(selectedEntry.id, 'contacted');
-                      setSelectedEntry({...selectedEntry, status: 'contacted'});
                     }}>
                       Mark as Contacted
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       handleStatusChange(selectedEntry.id, 'accepted');
-                      setSelectedEntry({...selectedEntry, status: 'accepted'});
                     }}>
                       Mark as Accepted
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {
                       handleStatusChange(selectedEntry.id, 'rejected');
-                      setSelectedEntry({...selectedEntry, status: 'rejected'});
                     }}>
                       Mark as Rejected
                     </DropdownMenuItem>

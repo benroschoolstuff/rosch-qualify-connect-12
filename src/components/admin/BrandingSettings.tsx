@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from '@/integrations/supabase/client';
 
 interface BrandingSettings {
   siteName: string;
@@ -48,11 +48,26 @@ const BrandingSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
-    // Load settings from localStorage
-    const storedSettings = localStorage.getItem('brandingSettings');
-    if (storedSettings) {
-      setSettings(JSON.parse(storedSettings));
-    }
+    // Load settings from Supabase
+    const loadSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('*')
+          .eq('setting_name', 'branding')
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error loading branding settings:', error);
+        } else if (data?.setting_value) {
+          setSettings(data.setting_value as BrandingSettings);
+        }
+      } catch (error) {
+        console.error('Error loading branding settings:', error);
+      }
+    };
+    
+    loadSettings();
   }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -76,12 +91,19 @@ const BrandingSettings = () => {
     }
   };
   
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setIsLoading(true);
     
     try {
-      // Save settings to localStorage
-      localStorage.setItem('brandingSettings', JSON.stringify(settings));
+      // Save settings to Supabase
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_name: 'branding',
+          setting_value: settings
+        }, { onConflict: 'setting_name' });
+      
+      if (error) throw error;
       
       // Apply settings (in a real app, this would update CSS variables, etc.)
       document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
@@ -103,14 +125,32 @@ const BrandingSettings = () => {
     }
   };
   
-  const handleResetSettings = () => {
+  const handleResetSettings = async () => {
     setSettings(defaultSettings);
-    localStorage.removeItem('brandingSettings');
     
-    toast({
-      title: "Branding reset",
-      description: "Branding settings have been reset to defaults.",
-    });
+    try {
+      // Update Supabase with default settings
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_name: 'branding',
+          setting_value: defaultSettings
+        }, { onConflict: 'setting_name' });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Branding reset",
+        description: "Branding settings have been reset to defaults.",
+      });
+    } catch (error) {
+      console.error('Error resetting branding settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset branding settings. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -381,6 +421,7 @@ const BrandingSettings = () => {
         <Button 
           variant="outline" 
           onClick={handleResetSettings}
+          disabled={isLoading}
         >
           Reset to Defaults
         </Button>

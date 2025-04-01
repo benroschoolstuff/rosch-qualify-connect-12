@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast as sonnerToast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const DiscordSettings = () => {
   const { toast } = useToast();
@@ -18,64 +18,61 @@ const DiscordSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState<'loading' | 'connected' | 'error'>('loading');
   
-  // Load settings from localStorage and check for config file
   useEffect(() => {
-    // First load from localStorage
-    const storedBotToken = localStorage.getItem('botToken') || '';
-    const storedClientId = localStorage.getItem('clientId') || '';
-    const storedClientSecret = localStorage.getItem('clientSecret') || '';
-    const storedGuildId = localStorage.getItem('guildId') || '';
-    
-    setBotToken(storedBotToken);
-    setClientId(storedClientId);
-    setClientSecret(storedClientSecret);
-    setGuildId(storedGuildId);
-    
-    // Check API connection
-    checkApiConnection();
-    
-    // Then try to load from config file through API
-    fetch('/api/get-config')
-      .then(response => {
+    const loadSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('discord_settings')
+          .select('*')
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error loading discord settings:', error);
+        } else if (data) {
+          setBotToken(data.bot_token || '');
+          setClientId(data.client_id || '');
+          setClientSecret(data.client_secret || '');
+          setGuildId(data.guild_id || '');
+          setAllowedAdmins(data.allowed_admins || []);
+        }
+      } catch (error) {
+        console.error('Error loading settings from Supabase:', error);
+      }
+      
+      checkApiConnection();
+      
+      try {
+        const response = await fetch('/api/get-config');
         if (response.ok) {
           setApiStatus('connected');
-          return response.json();
+          const config = await response.json();
+          console.log('Config loaded from API:', config);
+          if (config.botToken) setBotToken(config.botToken);
+          if (config.guildId) setGuildId(config.guildId);
+          if (config.allowedAdmins) setAllowedAdmins(config.allowedAdmins);
+        } else {
+          throw new Error('Failed to load configuration');
         }
-        throw new Error('Failed to load configuration');
-      })
-      .then(config => {
-        console.log('Config loaded from API:', config);
-        // Only update state if values are available in config
-        if (config.botToken) setBotToken(config.botToken);
-        if (config.guildId) setGuildId(config.guildId);
-        if (config.allowedAdmins) setAllowedAdmins(config.allowedAdmins);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error loading config from API:', error);
         setApiStatus('error');
-        // If failed to load from API, try to load admins from localStorage
-        try {
-          const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
-          setAllowedAdmins(storedAdmins);
-        } catch (error) {
-          console.error('Error parsing stored admins:', error);
-          setAllowedAdmins([]);
-        }
-      });
+      }
+    };
+    
+    loadSettings();
   }, []);
   
-  const checkApiConnection = () => {
-    fetch('/api/health', { method: 'GET' })
-      .then(response => {
-        if (response.ok) {
-          setApiStatus('connected');
-        } else {
-          setApiStatus('error');
-        }
-      })
-      .catch(() => {
+  const checkApiConnection = async () => {
+    try {
+      const response = await fetch('/api/health', { method: 'GET' });
+      if (response.ok) {
+        setApiStatus('connected');
+      } else {
         setApiStatus('error');
-      });
+      }
+    } catch (error) {
+      setApiStatus('error');
+    }
   };
   
   const saveDiscordConfig = async () => {
@@ -86,34 +83,42 @@ const DiscordSettings = () => {
         allowedAdmins
       };
       
-      // Save to localStorage
-      localStorage.setItem('botToken', botToken);
-      localStorage.setItem('guildId', guildId);
-      localStorage.setItem('allowedAdmins', JSON.stringify(allowedAdmins));
+      const { error } = await supabase
+        .from('discord_settings')
+        .upsert({
+          id: 'default',
+          bot_token: botToken,
+          client_id: clientId,
+          client_secret: clientSecret,
+          guild_id: guildId,
+          allowed_admins: allowedAdmins
+        }, { onConflict: 'id' });
       
-      // Save to config file through API
-      const response = await fetch('/api/save-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
+      if (error) throw error;
       
-      console.log('Save config API response:', response);
-      
-      if (!response.ok) {
-        throw new Error('Failed to save configuration');
+      if (apiStatus === 'connected') {
+        const response = await fetch('/api/save-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(config),
+        });
+        
+        console.log('Save config API response:', response);
+        
+        if (!response.ok) {
+          throw new Error('Failed to save configuration');
+        }
       }
       
       return true;
     } catch (error) {
       console.error('Error saving Discord configuration:', error);
-      sonnerToast.error('Configuration saved to localStorage but could not be saved to disk. The Discord bot might not receive the changes.', {
+      sonnerToast.error('Configuration saved to database but could not be saved to the bot. The Discord bot might not receive the changes.', {
         duration: 5000,
       });
       
-      // Return true even if server-side saving fails
       return true;
     }
   };
@@ -122,14 +127,9 @@ const DiscordSettings = () => {
     setIsLoading(true);
     
     try {
-      // Save Discord bot and OAuth settings
       const saved = await saveDiscordConfig();
       
       if (saved) {
-        // Save OAuth settings to localStorage
-        localStorage.setItem('clientId', clientId);
-        localStorage.setItem('clientSecret', clientSecret);
-        
         toast({
           title: "Settings saved",
           description: "Discord bot and OAuth settings have been updated.",
@@ -159,7 +159,6 @@ const DiscordSettings = () => {
       return;
     }
     
-    // Check if admin already exists
     if (allowedAdmins.includes(newAdminId)) {
       toast({
         title: "Admin already exists",
@@ -169,18 +168,20 @@ const DiscordSettings = () => {
       return;
     }
     
-    // Add admin to list
     const updatedAdmins = [...allowedAdmins, newAdminId];
-    setAllowedAdmins(updatedAdmins);
     
-    // Save updated admin list
     try {
-      localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
+      const { error } = await supabase
+        .from('discord_settings')
+        .update({ allowed_admins: updatedAdmins })
+        .eq('id', 'default');
       
-      // Save to config file
+      if (error) throw error;
+      
+      setAllowedAdmins(updatedAdmins);
+      
       await saveDiscordConfig();
       
-      // Clear input
       setNewAdminId('');
       
       toast({
@@ -198,15 +199,18 @@ const DiscordSettings = () => {
   };
   
   const handleRemoveAdmin = async (adminId: string) => {
-    // Remove admin from list
     const updatedAdmins = allowedAdmins.filter(id => id !== adminId);
-    setAllowedAdmins(updatedAdmins);
     
-    // Save updated admin list
     try {
-      localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
+      const { error } = await supabase
+        .from('discord_settings')
+        .update({ allowed_admins: updatedAdmins })
+        .eq('id', 'default');
       
-      // Save to config file
+      if (error) throw error;
+      
+      setAllowedAdmins(updatedAdmins);
+      
       await saveDiscordConfig();
       
       toast({
@@ -228,7 +232,7 @@ const DiscordSettings = () => {
       {apiStatus === 'error' && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
           <strong className="font-bold">API Connection Error:</strong>
-          <span className="block sm:inline"> Unable to connect to the Discord bot API. Configurations will only be saved locally.</span>
+          <span className="block sm:inline"> Unable to connect to the Discord bot API. Configurations will only be saved to the database.</span>
         </div>
       )}
       

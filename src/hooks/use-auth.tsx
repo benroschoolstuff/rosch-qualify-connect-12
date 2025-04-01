@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthUser {
   id: string;
@@ -10,64 +12,117 @@ interface AuthUser {
 
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [setupComplete, setSetupComplete] = useState(false);
   const [allowedAdmins, setAllowedAdmins] = useState<string[]>([]);
 
   useEffect(() => {
-    // Check if setup is complete
-    const setupStatus = localStorage.getItem('setupComplete') === 'true';
-    setSetupComplete(setupStatus);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        setSession(newSession);
+        if (newSession?.user) {
+          setSupabaseUser(newSession.user);
+          
+          // Format user data
+          const authUser: AuthUser = {
+            id: newSession.user.id,
+            username: newSession.user.user_metadata.full_name || newSession.user.user_metadata.name || 'User',
+            avatar: newSession.user.user_metadata.avatar_url,
+            email: newSession.user.email
+          };
+          
+          setUser(authUser);
+        } else {
+          setSupabaseUser(null);
+          setUser(null);
+        }
+      }
+    );
     
-    // Check for user data in localStorage
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    
-    if (storedUser && token) {
+    // Check for existing session
+    const initializeAuth = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+        // Check if setup is complete
+        await checkSetupComplete();
+        
+        // Get current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.user) {
+          setSession(currentSession);
+          setSupabaseUser(currentSession.user);
+          
+          // Format user data
+          const authUser: AuthUser = {
+            id: currentSession.user.id,
+            username: currentSession.user.user_metadata.full_name || currentSession.user.user_metadata.name || 'User',
+            avatar: currentSession.user.user_metadata.avatar_url,
+            email: currentSession.user.email
+          };
+          
+          setUser(authUser);
+        }
         
         // Load admin list
-        loadAdminList();
+        await loadAdminList();
       } catch (error) {
-        console.error('Error parsing user data:', error);
-        // Invalid user data, remove from storage
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        console.error('Error initializing auth:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      loadAdminList();
-    }
+    };
     
-    setIsLoading(false);
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const checkSetupComplete = async () => {
+    try {
+      // Try to get a site setting to determine if setup is complete
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select()
+        .eq('setting_name', 'setup_complete')
+        .single();
+      
+      if (error) {
+        console.error('Error checking setup status:', error);
+        // If no setup_complete setting found, assume setup not complete
+        setSetupComplete(false);
+      } else {
+        // If setting exists, use its value
+        setSetupComplete(data?.setting_value?.value === true);
+      }
+    } catch (error) {
+      console.error('Error checking setup status:', error);
+      setSetupComplete(false);
+    }
+  };
 
   const loadAdminList = async () => {
     try {
-      // First try to load from API
-      const response = await fetch('/api/get-config');
-      if (response.ok) {
-        const config = await response.json();
-        if (config.allowedAdmins) {
-          setAllowedAdmins(config.allowedAdmins);
-          return;
-        }
-      }
+      // Get discord settings from database
+      const { data, error } = await supabase
+        .from('discord_settings')
+        .select('allowed_admins')
+        .maybeSingle();
       
-      // Fallback to localStorage if API fails
-      const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
-      setAllowedAdmins(storedAdmins);
-    } catch (error) {
-      console.error('Error loading admin list:', error);
-      // Fallback to localStorage if API fails
-      try {
-        const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
-        setAllowedAdmins(storedAdmins);
-      } catch (error) {
-        console.error('Error parsing stored admins:', error);
+      if (error) {
+        console.error('Error loading admin list:', error);
+        setAllowedAdmins([]);
+      } else if (data?.allowed_admins) {
+        setAllowedAdmins(data.allowed_admins);
+      } else {
         setAllowedAdmins([]);
       }
+    } catch (error) {
+      console.error('Error loading admin list:', error);
+      setAllowedAdmins([]);
     }
   };
 
@@ -76,10 +131,11 @@ export const useAuth = () => {
     return allowedAdmins.includes(user.id);
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSupabaseUser(null);
+    setSession(null);
   };
 
   return {

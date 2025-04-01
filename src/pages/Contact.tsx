@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/shared/Hero';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -29,10 +29,32 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Real Discord webhook URL
-    const webhook = "https://discord.com/api/webhooks/1356354379808116958/zztXYcU1htl71kpjPhqDOmm626qM53HjfRj72FfEs1z_hEpctW42cFrZzmNYCl4BqTmn";
+    // Discord webhook URL from Supabase
+    let webhook: string | null = null;
     
     try {
+      // First get Discord webhook URL from database
+      const { data: discordSettings } = await supabase
+        .from('discord_settings')
+        .select('webhook_url')
+        .maybeSingle();
+      
+      webhook = discordSettings?.webhook_url || "https://discord.com/api/webhooks/1356354379808116958/zztXYcU1htl71kpjPhqDOmm626qM53HjfRj72FfEs1z_hEpctW42cFrZzmNYCl4BqTmn";
+      
+      // Save to Supabase
+      const { error: dbError } = await supabase
+        .from('waiting_list')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          discord_id: formData.discordId || null,
+          qualification: formData.qualification || null,
+          message: formData.message || null,
+          status: 'new'
+        });
+      
+      if (dbError) throw dbError;
+      
       // Format message for Discord
       const discordMessage = {
         content: "New Waiting List Signup",
@@ -65,46 +87,34 @@ const Contact = () => {
         }]
       };
 
-      // Save to local storage for waiting list management
-      const waitingList = JSON.parse(localStorage.getItem('waitingList') || '[]');
-      waitingList.push({
-        id: Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        discordId: formData.discordId,
-        qualification: formData.qualification,
-        message: formData.message,
-        date: new Date().toISOString(),
-        status: 'new'
-      });
-      localStorage.setItem('waitingList', JSON.stringify(waitingList));
-
-      // Send to webhook
-      const response = await fetch(webhook, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(discordMessage),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: "You've been added to our waiting list. We'll contact you when applications open.",
+      // Send to webhook if available
+      if (webhook) {
+        const response = await fetch(webhook, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(discordMessage),
         });
-        
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          discordId: '',
-          qualification: '',
-          message: ''
-        });
-      } else {
-        throw new Error('Failed to submit form');
+
+        if (!response.ok) {
+          console.error('Discord webhook error:', response.statusText);
+        }
       }
+
+      toast({
+        title: "Success!",
+        description: "You've been added to our waiting list. We'll contact you when applications open.",
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        discordId: '',
+        qualification: '',
+        message: ''
+      });
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({

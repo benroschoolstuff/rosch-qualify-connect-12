@@ -1,16 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Check, Info, X } from 'lucide-react';
 import TeamManagement from '@/components/admin/TeamManagement';
+import { supabase } from '@/integrations/supabase/client';
 
 const Setup = () => {
   const { toast } = useToast();
@@ -29,15 +28,27 @@ const Setup = () => {
   
   // Check if setup is already complete
   useEffect(() => {
-    const setupStatus = localStorage.getItem('setupComplete') === 'true';
-    setSetupComplete(setupStatus);
+    const checkSetupStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select()
+          .eq('setting_name', 'setup_complete')
+          .single();
+        
+        if (!error && data?.setting_value?.value === true) {
+          setSetupComplete(true);
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error checking setup status:', error);
+      }
+      
+      // Check API connection
+      checkApiConnection();
+    };
     
-    if (setupStatus) {
-      navigate('/login');
-    }
-    
-    // Check API connection
-    checkApiConnection();
+    checkSetupStatus();
   }, [navigate]);
   
   const checkApiConnection = async () => {
@@ -85,17 +96,23 @@ const Setup = () => {
     setIsLoading(true);
     
     try {
-      // Save Discord settings
-      localStorage.setItem('botToken', botToken);
-      localStorage.setItem('clientId', clientId);
-      localStorage.setItem('clientSecret', clientSecret);
-      localStorage.setItem('guildId', guildId);
-      
-      // Save admin ID
+      // Save Discord settings to Supabase
       const allowedAdmins = [adminId];
-      localStorage.setItem('allowedAdmins', JSON.stringify(allowedAdmins));
       
-      // Save to config file through API if available
+      const { error } = await supabase
+        .from('discord_settings')
+        .upsert({
+          id: 'default', // Using a constant ID for easier retrieval
+          bot_token: botToken,
+          client_id: clientId,
+          client_secret: clientSecret,
+          guild_id: guildId,
+          allowed_admins: allowedAdmins
+        }, { onConflict: 'id' });
+      
+      if (error) throw error;
+      
+      // Try to save to config file through API if available
       if (apiStatus === 'connected') {
         const config = {
           botToken,
@@ -134,45 +151,79 @@ const Setup = () => {
     }
   };
   
-  const handleSaveBrandingSettings = () => {
-    const brandingSettings = {
-      siteName,
-      siteTagline,
-      primaryColor: '#1d4ed8',
-      accentColor: '#60a5fa',
-      footerText: `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`,
-      contactEmail: 'info@rosch.uk',
-      contactPhone: '',
-      socialLinks: {
-        discord: '',
-        twitter: '',
-        facebook: '',
-        instagram: '',
-      },
-    };
-    
-    localStorage.setItem('brandingSettings', JSON.stringify(brandingSettings));
-    
-    toast({
-      title: "Branding settings saved",
-      description: "Your branding configuration has been saved successfully.",
-    });
-    
-    nextTab('branding');
+  const handleSaveBrandingSettings = async () => {
+    try {
+      const brandingSettings = {
+        siteName,
+        siteTagline,
+        primaryColor: '#1d4ed8',
+        accentColor: '#60a5fa',
+        footerText: `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`,
+        contactEmail: 'info@rosch.uk',
+        contactPhone: '',
+        socialLinks: {
+          discord: '',
+          twitter: '',
+          facebook: '',
+          instagram: '',
+        },
+      };
+      
+      // Save branding settings to Supabase
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_name: 'branding',
+          setting_value: brandingSettings
+        }, { onConflict: 'setting_name' });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Branding settings saved",
+        description: "Your branding configuration has been saved successfully.",
+      });
+      
+      nextTab('branding');
+    } catch (error) {
+      console.error('Error saving branding settings:', error);
+      toast({
+        title: "Error saving settings",
+        description: "There was an error saving your branding settings.",
+        variant: "destructive",
+      });
+    }
   };
   
-  const handleCompleteSetup = () => {
-    localStorage.setItem('setupComplete', 'true');
-    
-    toast({
-      title: "Setup complete",
-      description: "Your site is now configured. You will be redirected to login.",
-    });
-    
-    // Redirect to login after a short delay
-    setTimeout(() => {
-      navigate('/login');
-    }, 2000);
+  const handleCompleteSetup = async () => {
+    try {
+      // Mark setup as complete in Supabase
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({
+          setting_name: 'setup_complete',
+          setting_value: { value: true }
+        }, { onConflict: 'setting_name' });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Setup complete",
+        description: "Your site is now configured. You will be redirected to login.",
+      });
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (error) {
+      console.error('Error completing setup:', error);
+      toast({
+        title: "Error",
+        description: "There was an error completing the setup.",
+        variant: "destructive",
+      });
+    }
   };
   
   if (setupComplete) {
