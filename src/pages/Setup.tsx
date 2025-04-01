@@ -1,314 +1,439 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { toast as sonnerToast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Check, Info, X } from 'lucide-react';
+import TeamManagement from '@/components/admin/TeamManagement';
 
 const Setup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [activeTab, setActiveTab] = useState('welcome');
+  const [setupComplete, setSetupComplete] = useState(false);
   const [botToken, setBotToken] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [guildId, setGuildId] = useState('');
+  const [adminId, setAdminId] = useState('');
+  const [siteName, setSiteName] = useState('ROSCH.UK');
+  const [siteTagline, setSiteTagline] = useState('Roblox Education Training');
   const [isLoading, setIsLoading] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [discordRedirectUri, setDiscordRedirectUri] = useState('');
-  const [showInstructions, setShowInstructions] = useState(false);
-
+  const [apiStatus, setApiStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
+  
+  // Check if setup is already complete
   useEffect(() => {
-    // Check if setup is already complete
-    const setupComplete = localStorage.getItem('setupComplete');
-    if (setupComplete === 'true') {
-      navigate('/');
+    const setupStatus = localStorage.getItem('setupComplete') === 'true';
+    setSetupComplete(setupStatus);
+    
+    if (setupStatus) {
+      navigate('/login');
     }
     
-    // Set the redirect URI based on current domain
-    const domain = window.location.origin;
-    setDiscordRedirectUri(`${domain}/auth/discord/callback`);
+    // Check API connection
+    checkApiConnection();
   }, [navigate]);
-
-  const saveDiscordConfig = async (config) => {
+  
+  const checkApiConnection = async () => {
     try {
-      // Create a config directory if it doesn't exist
-      const configData = JSON.stringify(config, null, 2);
-      
-      // Use localStorage as a temporary solution
-      // In a real implementation, this would be a server API call
-      localStorage.setItem('discordConfig', configData);
-      
-      // Save to config/discord-config.json using fetch API
-      const response = await fetch('/api/save-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: configData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save configuration');
+      const response = await fetch('/api/health');
+      if (response.ok) {
+        setApiStatus('connected');
+      } else {
+        setApiStatus('error');
       }
-      
-      return true;
     } catch (error) {
-      console.error('Error saving Discord configuration:', error);
-      sonnerToast.error('Configuration saved to localStorage but could not be saved to disk. The Discord bot might not start automatically.', {
-        duration: 10000,
-      });
-      
-      // Return true even if server-side saving fails
-      // This allows setup to continue even if the API isn't available
-      return true;
+      setApiStatus('error');
     }
   };
-
-  const handleSetupBot = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // Save Discord bot configuration
-      const botConfig = {
-        botToken,
-        guildId,
-        allowedAdmins: []
-      };
-      
-      const saved = await saveDiscordConfig(botConfig);
-      
-      if (saved) {
-        // Store the bot token in localStorage for the admin panel
-        localStorage.setItem('botToken', botToken);
-        localStorage.setItem('guildId', guildId);
-        
-        toast({
-          title: "Bot configuration saved",
-          description: "Your Discord bot has been configured successfully.",
-        });
-        
-        setStep(2);
-      } else {
-        throw new Error('Failed to save bot configuration');
-      }
-    } catch (error) {
-      console.error('Error setting up bot:', error);
+  
+  const nextTab = (current: string) => {
+    switch (current) {
+      case 'welcome':
+        setActiveTab('discord');
+        break;
+      case 'discord':
+        setActiveTab('branding');
+        break;
+      case 'branding':
+        setActiveTab('team');
+        break;
+      case 'team':
+        setActiveTab('complete');
+        break;
+      default:
+        break;
+    }
+  };
+  
+  const handleSaveDiscordSettings = async () => {
+    if (!botToken || !clientId || !clientSecret || !guildId || !adminId) {
       toast({
-        title: "Error",
-        description: "Failed to setup the Discord bot. Please check your token and try again.",
+        title: "Missing information",
+        description: "Please fill out all Discord configuration fields.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
+      return;
     }
-  };
-
-  const handleSetupOAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+    
     setIsLoading(true);
     
     try {
-      // Store OAuth credentials (in a real app this would be on the server)
+      // Save Discord settings
+      localStorage.setItem('botToken', botToken);
       localStorage.setItem('clientId', clientId);
       localStorage.setItem('clientSecret', clientSecret);
+      localStorage.setItem('guildId', guildId);
+      
+      // Save admin ID
+      const allowedAdmins = [adminId];
+      localStorage.setItem('allowedAdmins', JSON.stringify(allowedAdmins));
+      
+      // Save to config file through API if available
+      if (apiStatus === 'connected') {
+        const config = {
+          botToken,
+          guildId,
+          allowedAdmins
+        };
+        
+        const response = await fetch('/api/save-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(config),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save configuration to API');
+        }
+      }
       
       toast({
-        title: "OAuth configuration saved",
-        description: "Your Discord OAuth has been configured successfully.",
+        title: "Discord settings saved",
+        description: "Your Discord configuration has been saved successfully.",
       });
       
-      // Mark setup as complete
-      localStorage.setItem('setupComplete', 'true');
-      setIsComplete(true);
+      nextTab('discord');
     } catch (error) {
-      console.error('Error setting up OAuth:', error);
+      console.error('Error saving Discord settings:', error);
       toast({
-        title: "Error",
-        description: "Failed to setup Discord OAuth. Please check your credentials and try again.",
+        title: "Error saving settings",
+        description: "There was an error saving your Discord settings.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleComplete = () => {
-    navigate('/admin');
+  
+  const handleSaveBrandingSettings = () => {
+    const brandingSettings = {
+      siteName,
+      siteTagline,
+      primaryColor: '#1d4ed8',
+      accentColor: '#60a5fa',
+      footerText: `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`,
+      contactEmail: 'info@rosch.uk',
+      contactPhone: '',
+      socialLinks: {
+        discord: '',
+        twitter: '',
+        facebook: '',
+        instagram: '',
+      },
+    };
+    
+    localStorage.setItem('brandingSettings', JSON.stringify(brandingSettings));
+    
+    toast({
+      title: "Branding settings saved",
+      description: "Your branding configuration has been saved successfully.",
+    });
+    
+    nextTab('branding');
   };
-
+  
+  const handleCompleteSetup = () => {
+    localStorage.setItem('setupComplete', 'true');
+    
+    toast({
+      title: "Setup complete",
+      description: "Your site is now configured. You will be redirected to login.",
+    });
+    
+    // Redirect to login after a short delay
+    setTimeout(() => {
+      navigate('/login');
+    }, 2000);
+  };
+  
+  if (setupComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Setup Already Complete</CardTitle>
+            <CardDescription>
+              This site has already been configured.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>
+              For security reasons, the setup page is no longer accessible. 
+              Please use the management backend to make changes.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Go to Homepage
+            </Button>
+            <Button onClick={() => navigate('/login')}>
+              Go to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center justify-center p-4">
-      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Discord Bot Setup Instructions</DialogTitle>
-            <DialogDescription>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <h3 className="font-semibold">1. Create a Discord Application</h3>
-                  <p className="text-sm">Visit the Discord Developer Portal and create a new application.</p>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
+      <div className="container mx-auto px-4">
+        <Card className="max-w-4xl mx-auto">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl">Website Setup Wizard</CardTitle>
+            <CardDescription>
+              Configure your website and administrative settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <TabsList className="grid grid-cols-5 mb-8">
+                <TabsTrigger value="welcome">Welcome</TabsTrigger>
+                <TabsTrigger value="discord">Discord</TabsTrigger>
+                <TabsTrigger value="branding">Branding</TabsTrigger>
+                <TabsTrigger value="team">Team</TabsTrigger>
+                <TabsTrigger value="complete">Complete</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="welcome" className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold mb-4">Welcome to the Setup Wizard</h2>
+                  <p className="text-gray-600">
+                    This wizard will guide you through the initial configuration of your website.
+                    Once complete, this setup page will no longer be accessible for security reasons.
+                  </p>
                 </div>
-                <div>
-                  <h3 className="font-semibold">2. Create a Bot</h3>
-                  <p className="text-sm">Go to the Bot section and create a new bot. Copy the bot token.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">3. OAuth2 Settings</h3>
-                  <p className="text-sm">In the OAuth2 section, add the following redirect URL:</p>
-                  <code className="text-xs bg-gray-100 p-1 rounded block mt-1 overflow-x-auto">
-                    {discordRedirectUri}
-                  </code>
-                  <p className="text-sm mt-2">Copy the Client ID and Client Secret.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">4. Bot Permissions</h3>
-                  <p className="text-sm">Ensure your bot has these permissions:</p>
-                  <ul className="text-xs list-disc pl-5 mt-1">
-                    <li>Read Messages/View Channels</li>
-                    <li>Send Messages</li>
-                    <li>Manage Roles (to control admin access)</li>
-                  </ul>
-                </div>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-blue-700">ROSCH.UK Setup</CardTitle>
-          <CardDescription className="text-center">
-            {step === 1 ? "Configure Discord Bot" : step === 2 ? "Configure Discord OAuth" : "Setup Complete"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {step === 1 && (
-            <form onSubmit={handleSetupBot} className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="botToken">Discord Bot Token</Label>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-blue-600 text-xs"
-                    onClick={() => setShowInstructions(true)}
-                  >
-                    Need help?
+                
+                <Alert className="mb-6">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Important Note</AlertTitle>
+                  <AlertDescription>
+                    For this setup to work properly, you need to have created a Discord application and bot. 
+                    You'll need your Discord bot token, client ID, client secret, and server (guild) ID.
+                  </AlertDescription>
+                </Alert>
+                
+                <Alert className={`mb-6 ${apiStatus === 'connected' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                  {apiStatus === 'connected' ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <X className="h-4 w-4 text-red-600" />
+                  )}
+                  <AlertTitle>API Connection Status</AlertTitle>
+                  <AlertDescription>
+                    {apiStatus === 'connected' ? (
+                      "API connection successful. Your Discord bot configuration will be saved to the bot."
+                    ) : (
+                      "Unable to connect to the Discord bot API. Settings will only be saved locally."
+                    )}
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex justify-end">
+                  <Button onClick={() => nextTab('welcome')}>
+                    Begin Setup
                   </Button>
                 </div>
-                <Input
-                  id="botToken"
-                  type="password"
-                  placeholder="Enter your Discord bot token"
-                  value={botToken}
-                  onChange={(e) => setBotToken(e.target.value)}
-                  required
-                />
-              </div>
+              </TabsContent>
               
-              <div className="space-y-2">
-                <Label htmlFor="guildId">Discord Server ID</Label>
-                <Input
-                  id="guildId"
-                  placeholder="Enter your Discord server ID"
-                  value={guildId}
-                  onChange={(e) => setGuildId(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-gray-500">
-                  This is the server where admin commands will be used.
-                </p>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full btn-primary"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : 'Continue'}
-              </Button>
-            </form>
-          )}
-          
-          {step === 2 && (
-            <form onSubmit={handleSetupOAuth} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Discord Client ID</Label>
-                <Input
-                  id="clientId"
-                  placeholder="Enter your Discord application client ID"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="clientSecret">Discord Client Secret</Label>
-                <Input
-                  id="clientSecret"
-                  type="password"
-                  placeholder="Enter your Discord application client secret"
-                  value={clientSecret}
-                  onChange={(e) => setClientSecret(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="redirectUri">Redirect URI</Label>
-                <Input
-                  id="redirectUri"
-                  value={discordRedirectUri}
-                  readOnly
-                  className="bg-gray-50"
-                />
-                <p className="text-xs text-gray-500">
-                  Add this URL to your Discord application's OAuth2 redirect URLs.
-                </p>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full btn-primary"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Saving...' : 'Complete Setup'}
-              </Button>
-            </form>
-          )}
-          
-          {isComplete && (
-            <div className="space-y-4 text-center">
-              <div className="py-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-green-600">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
+              <TabsContent value="discord" className="space-y-6">
+                <h2 className="text-2xl font-bold mb-4">Discord Configuration</h2>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="botToken">Discord Bot Token</Label>
+                    <Input
+                      id="botToken"
+                      type="password"
+                      placeholder="Enter your Discord bot token"
+                      value={botToken}
+                      onChange={(e) => setBotToken(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">
+                      The bot token from your Discord Developer Portal.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="clientId">OAuth2 Client ID</Label>
+                    <Input
+                      id="clientId"
+                      placeholder="Enter your Discord application client ID"
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="clientSecret">OAuth2 Client Secret</Label>
+                    <Input
+                      id="clientSecret"
+                      type="password"
+                      placeholder="Enter your Discord application client secret"
+                      value={clientSecret}
+                      onChange={(e) => setClientSecret(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="guildId">Discord Server ID</Label>
+                    <Input
+                      id="guildId"
+                      placeholder="Enter your Discord server (guild) ID"
+                      value={guildId}
+                      onChange={(e) => setGuildId(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">
+                      The ID of the Discord server where admin commands will be used.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="adminId">Admin Discord ID</Label>
+                    <Input
+                      id="adminId"
+                      placeholder="Enter your Discord user ID"
+                      value={adminId}
+                      onChange={(e) => setAdminId(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Your Discord user ID, which will have admin access to the website.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="callbackUrl">OAuth2 Redirect URI</Label>
+                    <Input
+                      id="callbackUrl"
+                      value={`${window.location.origin}/auth/discord/callback`}
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Add this URL to your Discord application's OAuth2 redirect URLs.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="mt-4 text-xl font-medium text-gray-900">Setup Complete</h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  Your Discord bot and OAuth have been configured successfully. You can now start using the admin panel.
+                
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSaveDiscordSettings} 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Saving...' : 'Save and Continue'}
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="branding" className="space-y-6">
+                <h2 className="text-2xl font-bold mb-4">Branding Configuration</h2>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="siteName">Site Name</Label>
+                    <Input
+                      id="siteName"
+                      placeholder="Enter the name of your site"
+                      value={siteName}
+                      onChange={(e) => setSiteName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="siteTagline">Site Tagline</Label>
+                    <Input
+                      id="siteTagline"
+                      placeholder="Enter a tagline for your site"
+                      value={siteTagline}
+                      onChange={(e) => setSiteTagline(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveBrandingSettings}>
+                    Save and Continue
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="team" className="space-y-6">
+                <h2 className="text-2xl font-bold mb-4">Team Configuration</h2>
+                <p className="text-gray-600 mb-6">
+                  Add your team members that will be displayed on the "Meet Our Team" page.
                 </p>
-              </div>
-              <Button 
-                onClick={handleComplete} 
-                className="w-full btn-primary"
-              >
-                Go to Admin Panel
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                
+                <TeamManagement />
+                
+                <div className="flex justify-end mt-8">
+                  <Button onClick={() => nextTab('team')}>
+                    Continue to Complete Setup
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="complete" className="space-y-6">
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-4">Setup Complete!</h2>
+                  <p className="text-gray-600">
+                    Congratulations! Your website has been successfully configured. 
+                    For security reasons, this setup page will no longer be accessible 
+                    once you complete this process.
+                  </p>
+                </div>
+                
+                <Alert className="mb-6">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>What's Next?</AlertTitle>
+                  <AlertDescription>
+                    After completing setup, you'll be redirected to the login page. 
+                    Use your Discord account to log in as an administrator. You can then 
+                    access the management backend at {window.location.origin}/managementbackend.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex justify-center">
+                  <Button onClick={handleCompleteSetup}>
+                    Complete Setup & Redirect to Login
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

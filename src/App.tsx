@@ -14,7 +14,8 @@ import NotFound from "./pages/NotFound";
 import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
-import Admin from "./pages/Admin";
+import ManagementBackend from "./pages/ManagementBackend";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,11 @@ const App = () => (
           <Route path="/setup" element={<Setup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/discord/callback" element={<AuthCallback />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/managementbackend" element={
+            <ProtectedRoute>
+              <ManagementBackend />
+            </ProtectedRoute>
+          } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

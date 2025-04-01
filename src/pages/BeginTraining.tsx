@@ -1,12 +1,48 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import Hero from '@/components/shared/Hero';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+}
+
+const defaultFAQs: FAQ[] = [
+  {
+    id: '1',
+    question: 'When will applications reopen?',
+    answer: 'We expect to begin accepting new applications for our next cohort in the coming months. Join our waiting list to be notified.',
+    category: 'Applications'
+  },
+  {
+    id: '2',
+    question: 'Do I need prior Roblox experience?',
+    answer: 'While some basic familiarity is helpful, our beginner programs include introductory modules for those new to the platform.',
+    category: 'Requirements'
+  }
+];
 
 const BeginTraining = () => {
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  
+  useEffect(() => {
+    // Load FAQs from localStorage
+    const storedFaqs = localStorage.getItem('faqs');
+    if (storedFaqs) {
+      setFaqs(JSON.parse(storedFaqs));
+    } else {
+      setFaqs(defaultFAQs);
+    }
+  }, []);
+  
   return (
     <MainLayout>
       <Hero
@@ -92,35 +128,24 @@ const BeginTraining = () => {
       <section className="bg-gray-100 py-16">
         <div className="section-container">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-blue-700 mb-4">Frequently Asked Questions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-8 text-left">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-bold mb-2">When will applications reopen?</h3>
-                  <p>We expect to begin accepting new applications for our next cohort in the coming months. Join our waiting list to be notified.</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-bold mb-2">Do I need prior Roblox experience?</h3>
-                  <p>While some basic familiarity is helpful, our beginner programs include introductory modules for those new to the platform.</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-bold mb-2">Are the qualifications recognized?</h3>
-                  <p>Our qualifications are industry-recognized certifications specifically for educational applications of Roblox.</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-bold mb-2">Can my school enroll multiple staff members?</h3>
-                  <p>Yes, we offer institutional packages for schools wanting to train multiple staff members. Contact us for details.</p>
-                </CardContent>
-              </Card>
+            <h2 className="text-3xl font-bold text-blue-700 mb-8">Frequently Asked Questions</h2>
+            <div className="max-w-4xl mx-auto mt-8 text-left">
+              <Accordion type="multiple" className="w-full space-y-4">
+                {faqs.map((faq) => (
+                  <AccordionItem 
+                    key={faq.id} 
+                    value={faq.id}
+                    className="bg-white rounded-lg border shadow-sm"
+                  >
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                      <span className="font-medium text-left">{faq.question}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </div>
         </div>
