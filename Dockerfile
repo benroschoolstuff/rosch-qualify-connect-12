@@ -41,7 +41,7 @@ COPY --from=discord-bot /app/bot /app/bot
 # Install Node.js in the final image
 RUN apk add --update nodejs npm
 
-# Copy custom nginx config to change port to 8414
+# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Create an API proxy from nginx to the Express server
@@ -51,8 +51,8 @@ RUN echo 'location /api/ { proxy_pass http://localhost:3000/api/; }' >> /etc/ngi
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# Expose port 8414
-EXPOSE 8414
+# Expose port 8418
+EXPOSE 8418
 
 # Run both nginx and the Discord bot
 CMD ["/start.sh"]

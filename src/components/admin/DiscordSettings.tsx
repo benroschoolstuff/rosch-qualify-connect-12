@@ -16,6 +16,7 @@ const DiscordSettings = () => {
   const [allowedAdmins, setAllowedAdmins] = useState<string[]>([]);
   const [newAdminId, setNewAdminId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'loading' | 'connected' | 'error'>('loading');
   
   // Load settings from localStorage and check for config file
   useEffect(() => {
@@ -30,15 +31,20 @@ const DiscordSettings = () => {
     setClientSecret(storedClientSecret);
     setGuildId(storedGuildId);
     
+    // Check API connection
+    checkApiConnection();
+    
     // Then try to load from config file through API
     fetch('/api/get-config')
       .then(response => {
         if (response.ok) {
+          setApiStatus('connected');
           return response.json();
         }
         throw new Error('Failed to load configuration');
       })
       .then(config => {
+        console.log('Config loaded from API:', config);
         // Only update state if values are available in config
         if (config.botToken) setBotToken(config.botToken);
         if (config.guildId) setGuildId(config.guildId);
@@ -46,6 +52,7 @@ const DiscordSettings = () => {
       })
       .catch(error => {
         console.error('Error loading config from API:', error);
+        setApiStatus('error');
         // If failed to load from API, try to load admins from localStorage
         try {
           const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
@@ -56,6 +63,20 @@ const DiscordSettings = () => {
         }
       });
   }, []);
+  
+  const checkApiConnection = () => {
+    fetch('/api/health', { method: 'GET' })
+      .then(response => {
+        if (response.ok) {
+          setApiStatus('connected');
+        } else {
+          setApiStatus('error');
+        }
+      })
+      .catch(() => {
+        setApiStatus('error');
+      });
+  };
   
   const saveDiscordConfig = async () => {
     try {
@@ -78,6 +99,8 @@ const DiscordSettings = () => {
         },
         body: JSON.stringify(config),
       });
+      
+      console.log('Save config API response:', response);
       
       if (!response.ok) {
         throw new Error('Failed to save configuration');
@@ -202,6 +225,13 @@ const DiscordSettings = () => {
 
   return (
     <div className="space-y-8">
+      {apiStatus === 'error' && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong className="font-bold">API Connection Error:</strong>
+          <span className="block sm:inline"> Unable to connect to the Discord bot API. Configurations will only be saved locally.</span>
+        </div>
+      )}
+      
       <Card>
         <CardHeader>
           <CardTitle>Discord Bot Configuration</CardTitle>
