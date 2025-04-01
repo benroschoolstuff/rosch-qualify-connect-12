@@ -45,19 +45,19 @@ const defaultSettings: BrandingSettings = {
 };
 
 // Type guard to check if an object is a valid BrandingSettings
-function isBrandingSettings(obj: any): obj is BrandingSettings {
+function isBrandingSettings(obj: unknown): obj is BrandingSettings {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    typeof obj.siteName === 'string' &&
-    typeof obj.siteTagline === 'string' &&
-    typeof obj.primaryColor === 'string' &&
-    typeof obj.accentColor === 'string' &&
-    typeof obj.footerText === 'string' &&
-    typeof obj.contactEmail === 'string' &&
-    typeof obj.contactPhone === 'string' &&
-    typeof obj.socialLinks === 'object' &&
-    obj.socialLinks !== null
+    typeof (obj as any).siteName === 'string' &&
+    typeof (obj as any).siteTagline === 'string' &&
+    typeof (obj as any).primaryColor === 'string' &&
+    typeof (obj as any).accentColor === 'string' &&
+    typeof (obj as any).footerText === 'string' &&
+    typeof (obj as any).contactEmail === 'string' &&
+    typeof (obj as any).contactPhone === 'string' &&
+    typeof (obj as any).socialLinks === 'object' &&
+    (obj as any).socialLinks !== null
   );
 }
 
@@ -79,7 +79,7 @@ const BrandingSettings = () => {
         if (error) {
           console.error('Error loading branding settings:', error);
         } else if (data?.setting_value) {
-          const settingValue = data.setting_value as Json;
+          const settingValue = data.setting_value as unknown;
           if (isBrandingSettings(settingValue)) {
             setSettings(settingValue);
           } else {

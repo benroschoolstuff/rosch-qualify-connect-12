@@ -37,6 +37,13 @@ interface WaitingListEntry {
   created_at: string;
 }
 
+function convertToWaitingListEntry(dbEntry: any): WaitingListEntry {
+  return {
+    ...dbEntry,
+    status: isValidStatus(dbEntry.status) ? dbEntry.status : 'new'
+  };
+}
+
 const WaitingList = () => {
   const { toast } = useToast();
   const [waitingList, setWaitingList] = useState<WaitingListEntry[]>([]);
@@ -64,10 +71,7 @@ const WaitingList = () => {
             variant: "destructive",
           });
         } else if (data) {
-          const typedData: WaitingListEntry[] = data.map(item => ({
-            ...item,
-            status: isValidStatus(item.status) ? item.status : 'new'
-          }));
+          const typedData: WaitingListEntry[] = data.map(convertToWaitingListEntry);
           
           setWaitingList(typedData);
           setFilteredList(typedData);

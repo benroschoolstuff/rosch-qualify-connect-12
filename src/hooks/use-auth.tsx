@@ -12,8 +12,13 @@ interface AuthUser {
 }
 
 // Type guard to check if a setting value has a 'value' property that's boolean
-function hasValueProperty(obj: any): obj is { value: boolean } {
-  return typeof obj === 'object' && obj !== null && typeof obj.value === 'boolean';
+function hasValueProperty(obj: unknown): obj is { value: boolean } {
+  return typeof obj === 'object' && obj !== null && 'value' in obj && typeof (obj as any).value === 'boolean';
+}
+
+// Type guard to check if a value is a string array
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
 }
 
 export const useAuth = () => {
@@ -102,7 +107,7 @@ export const useAuth = () => {
         setSetupComplete(false);
       } else if (data?.setting_value) {
         // Check if the setting value has a 'value' property that is true
-        const settingValue = data.setting_value as Json;
+        const settingValue = data.setting_value as unknown;
         
         if (hasValueProperty(settingValue)) {
           setSetupComplete(settingValue.value === true);
@@ -131,13 +136,12 @@ export const useAuth = () => {
         setAllowedAdmins([]);
       } else if (data?.allowed_admins) {
         // Type safety check - ensure we're working with a string array
-        const adminList = data.allowed_admins as Json;
-        if (Array.isArray(adminList)) {
-          // Make sure every item is a string
-          const stringAdmins = adminList.filter(item => typeof item === 'string') as string[];
-          setAllowedAdmins(stringAdmins);
+        const adminList = data.allowed_admins as unknown;
+        
+        if (isStringArray(adminList)) {
+          setAllowedAdmins(adminList);
         } else {
-          console.error('allowed_admins is not an array:', data.allowed_admins);
+          console.error('allowed_admins is not a string array:', data.allowed_admins);
           setAllowedAdmins([]);
         }
       } else {
