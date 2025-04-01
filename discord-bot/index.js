@@ -1,5 +1,7 @@
 
 const { Client, GatewayIntentBits, Events, PermissionFlagsBits } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 
 // Initialize Discord client
 const client = new Client({
@@ -11,21 +13,44 @@ const client = new Client({
 });
 
 // Configuration
-const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const AUTHORIZED_SERVER_ID = process.env.DISCORD_GUILD_ID;
+let BOT_TOKEN = '';
+let AUTHORIZED_SERVER_ID = '';
+
+// Config file path - shared between the bot and web app
+const configPath = path.join(__dirname, '../config/discord-config.json');
 
 // Admin storage
 let allowedAdmins = [];
 
-// Load admin list from environment or JSON file
-function loadAdminList() {
+// Load configuration from file
+function loadConfig() {
   try {
-    // In a production app, this would load from a database
-    // For this example, we'll use a simple in-memory array
-    console.log('Admin list loaded');
+    // Check if config directory exists, if not create it
+    const configDir = path.join(__dirname, '../config');
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+    
+    // Check if config file exists
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      
+      // Set token and guild ID from config file
+      BOT_TOKEN = config.botToken || '';
+      AUTHORIZED_SERVER_ID = config.guildId || '';
+      allowedAdmins = config.allowedAdmins || [];
+      
+      console.log('Configuration loaded from file');
+      console.log(`Server ID: ${AUTHORIZED_SERVER_ID}`);
+      console.log(`Admin count: ${allowedAdmins.length}`);
+      return true;
+    } else {
+      console.log('Config file not found. Bot will not start until configured.');
+      return false;
+    }
   } catch (err) {
-    console.error('Error loading admin list:', err);
-    allowedAdmins = [];
+    console.error('Error loading configuration:', err);
+    return false;
   }
 }
 
@@ -33,7 +58,7 @@ function loadAdminList() {
 function addAdmin(discordId) {
   if (!allowedAdmins.includes(discordId)) {
     allowedAdmins.push(discordId);
-    // In a production app, this would save to a database
+    saveConfig();
     return true;
   }
   return false;
@@ -44,16 +69,60 @@ function removeAdmin(discordId) {
   const index = allowedAdmins.indexOf(discordId);
   if (index !== -1) {
     allowedAdmins.splice(index, 1);
-    // In a production app, this would save to a database
+    saveConfig();
     return true;
   }
   return false;
 }
 
+// Save configuration to file
+function saveConfig() {
+  try {
+    const config = {
+      botToken: BOT_TOKEN,
+      guildId: AUTHORIZED_SERVER_ID,
+      allowedAdmins: allowedAdmins
+    };
+    
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log('Configuration saved to file');
+    return true;
+  } catch (err) {
+    console.error('Error saving configuration:', err);
+    return false;
+  }
+}
+
+// Start the bot with new configuration
+function startBot() {
+  if (!BOT_TOKEN) {
+    console.error('Bot token not configured');
+    return false;
+  }
+  
+  client.login(BOT_TOKEN).catch(error => {
+    console.error('Failed to log in to Discord:', error);
+    return false;
+  });
+  
+  return true;
+}
+
+// Check for configuration changes every 30 seconds
+setInterval(() => {
+  const wasConfigured = BOT_TOKEN && AUTHORIZED_SERVER_ID;
+  const configLoaded = loadConfig();
+  
+  // If config was loaded and bot wasn't previously configured, start the bot
+  if (configLoaded && !wasConfigured && BOT_TOKEN && AUTHORIZED_SERVER_ID) {
+    console.log('New configuration detected, starting bot...');
+    startBot();
+  }
+}, 30000);
+
 // Bot ready event
 client.once(Events.ClientReady, () => {
   console.log(`Bot is ready! Logged in as ${client.user.tag}`);
-  loadAdminList();
 });
 
 // Message handler
@@ -143,18 +212,13 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-// Log in to Discord
-if (!BOT_TOKEN) {
-  console.error('DISCORD_BOT_TOKEN environment variable not set');
-  process.exit(1);
-}
+// Initial configuration load
+const configLoaded = loadConfig();
 
-if (!AUTHORIZED_SERVER_ID) {
-  console.error('DISCORD_GUILD_ID environment variable not set');
-  process.exit(1);
+// Start the bot if configuration is available
+if (configLoaded && BOT_TOKEN && AUTHORIZED_SERVER_ID) {
+  console.log('Starting bot with loaded configuration...');
+  startBot();
+} else {
+  console.log('Waiting for configuration...');
 }
-
-client.login(BOT_TOKEN).catch(error => {
-  console.error('Failed to log in to Discord:', error);
-  process.exit(1);
-});

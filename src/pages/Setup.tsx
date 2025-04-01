@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toast as sonnerToast } from 'sonner';
 
 const Setup = () => {
   const { toast } = useToast();
@@ -21,7 +22,7 @@ const Setup = () => {
   const [discordRedirectUri, setDiscordRedirectUri] = useState('');
   const [showInstructions, setShowInstructions] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Check if setup is already complete
     const setupComplete = localStorage.getItem('setupComplete');
     if (setupComplete === 'true') {
@@ -33,24 +34,69 @@ const Setup = () => {
     setDiscordRedirectUri(`${domain}/auth/discord/callback`);
   }, [navigate]);
 
+  const saveDiscordConfig = async (config) => {
+    try {
+      // Create a config directory if it doesn't exist
+      const configData = JSON.stringify(config, null, 2);
+      
+      // Use localStorage as a temporary solution
+      // In a real implementation, this would be a server API call
+      localStorage.setItem('discordConfig', configData);
+      
+      // Save to config/discord-config.json using fetch API
+      const response = await fetch('/api/save-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: configData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save configuration');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving Discord configuration:', error);
+      sonnerToast.error('Configuration saved to localStorage but could not be saved to disk. The Discord bot might not start automatically.', {
+        duration: 10000,
+      });
+      
+      // Return true even if server-side saving fails
+      // This allows setup to continue even if the API isn't available
+      return true;
+    }
+  };
+
   const handleSetupBot = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would communicate with the backend
-      // to setup the Discord bot with the provided token
+      // Save Discord bot configuration
+      const botConfig = {
+        botToken,
+        guildId,
+        allowedAdmins: []
+      };
       
-      // Store the bot token securely (in a real app this would be on the server)
-      localStorage.setItem('botToken', botToken);
-      localStorage.setItem('guildId', guildId);
+      const saved = await saveDiscordConfig(botConfig);
       
-      toast({
-        title: "Bot configuration saved",
-        description: "Your Discord bot has been configured successfully.",
-      });
-      
-      setStep(2);
+      if (saved) {
+        // Store the bot token in localStorage for the admin panel
+        localStorage.setItem('botToken', botToken);
+        localStorage.setItem('guildId', guildId);
+        
+        toast({
+          title: "Bot configuration saved",
+          description: "Your Discord bot has been configured successfully.",
+        });
+        
+        setStep(2);
+      } else {
+        throw new Error('Failed to save bot configuration');
+      }
     } catch (error) {
       console.error('Error setting up bot:', error);
       toast({

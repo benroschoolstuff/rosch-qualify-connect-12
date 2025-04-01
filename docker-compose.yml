@@ -6,7 +6,9 @@ services:
     build: .
     ports:
       - "8414:8414"
-    environment:
-      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
-      - DISCORD_GUILD_ID=${DISCORD_GUILD_ID}
+    volumes:
+      - config-data:/app/config
     restart: unless-stopped
+
+volumes:
+  config-data:

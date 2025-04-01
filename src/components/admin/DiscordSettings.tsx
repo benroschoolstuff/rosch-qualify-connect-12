@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast as sonnerToast } from 'sonner';
 
 const DiscordSettings = () => {
   const { toast } = useToast();
@@ -16,35 +17,103 @@ const DiscordSettings = () => {
   const [newAdminId, setNewAdminId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Load settings from localStorage
+  // Load settings from localStorage and check for config file
   useEffect(() => {
+    // First load from localStorage
     const storedBotToken = localStorage.getItem('botToken') || '';
     const storedClientId = localStorage.getItem('clientId') || '';
     const storedClientSecret = localStorage.getItem('clientSecret') || '';
     const storedGuildId = localStorage.getItem('guildId') || '';
-    const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
     
     setBotToken(storedBotToken);
     setClientId(storedClientId);
     setClientSecret(storedClientSecret);
     setGuildId(storedGuildId);
-    setAllowedAdmins(storedAdmins);
+    
+    // Then try to load from config file through API
+    fetch('/api/get-config')
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error('Failed to load configuration');
+      })
+      .then(config => {
+        // Only update state if values are available in config
+        if (config.botToken) setBotToken(config.botToken);
+        if (config.guildId) setGuildId(config.guildId);
+        if (config.allowedAdmins) setAllowedAdmins(config.allowedAdmins);
+      })
+      .catch(error => {
+        console.error('Error loading config from API:', error);
+        // If failed to load from API, try to load admins from localStorage
+        try {
+          const storedAdmins = JSON.parse(localStorage.getItem('allowedAdmins') || '[]');
+          setAllowedAdmins(storedAdmins);
+        } catch (error) {
+          console.error('Error parsing stored admins:', error);
+          setAllowedAdmins([]);
+        }
+      });
   }, []);
   
-  const handleSaveSettings = () => {
+  const saveDiscordConfig = async () => {
+    try {
+      const config = {
+        botToken,
+        guildId,
+        allowedAdmins
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('botToken', botToken);
+      localStorage.setItem('guildId', guildId);
+      localStorage.setItem('allowedAdmins', JSON.stringify(allowedAdmins));
+      
+      // Save to config file through API
+      const response = await fetch('/api/save-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save configuration');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving Discord configuration:', error);
+      sonnerToast.error('Configuration saved to localStorage but could not be saved to disk. The Discord bot might not receive the changes.', {
+        duration: 5000,
+      });
+      
+      // Return true even if server-side saving fails
+      return true;
+    }
+  };
+  
+  const handleSaveSettings = async () => {
     setIsLoading(true);
     
     try {
-      // Save settings to localStorage
-      localStorage.setItem('botToken', botToken);
-      localStorage.setItem('clientId', clientId);
-      localStorage.setItem('clientSecret', clientSecret);
-      localStorage.setItem('guildId', guildId);
+      // Save Discord bot and OAuth settings
+      const saved = await saveDiscordConfig();
       
-      toast({
-        title: "Settings saved",
-        description: "Discord bot and OAuth settings have been updated.",
-      });
+      if (saved) {
+        // Save OAuth settings to localStorage
+        localStorage.setItem('clientId', clientId);
+        localStorage.setItem('clientSecret', clientSecret);
+        
+        toast({
+          title: "Settings saved",
+          description: "Discord bot and OAuth settings have been updated.",
+        });
+      } else {
+        throw new Error('Failed to save settings');
+      }
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
@@ -57,7 +126,7 @@ const DiscordSettings = () => {
     }
   };
   
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (!newAdminId || newAdminId.trim() === '') {
       toast({
         title: "Invalid Discord ID",
@@ -80,27 +149,55 @@ const DiscordSettings = () => {
     // Add admin to list
     const updatedAdmins = [...allowedAdmins, newAdminId];
     setAllowedAdmins(updatedAdmins);
-    localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
     
-    // Clear input
-    setNewAdminId('');
-    
-    toast({
-      title: "Admin added",
-      description: "The Discord user has been added to the admin list.",
-    });
+    // Save updated admin list
+    try {
+      localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
+      
+      // Save to config file
+      await saveDiscordConfig();
+      
+      // Clear input
+      setNewAdminId('');
+      
+      toast({
+        title: "Admin added",
+        description: "The Discord user has been added to the admin list.",
+      });
+    } catch (error) {
+      console.error('Error saving admin:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save admin. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
-  const handleRemoveAdmin = (adminId: string) => {
+  const handleRemoveAdmin = async (adminId: string) => {
     // Remove admin from list
     const updatedAdmins = allowedAdmins.filter(id => id !== adminId);
     setAllowedAdmins(updatedAdmins);
-    localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
     
-    toast({
-      title: "Admin removed",
-      description: "The Discord user has been removed from the admin list.",
-    });
+    // Save updated admin list
+    try {
+      localStorage.setItem('allowedAdmins', JSON.stringify(updatedAdmins));
+      
+      // Save to config file
+      await saveDiscordConfig();
+      
+      toast({
+        title: "Admin removed",
+        description: "The Discord user has been removed from the admin list.",
+      });
+    } catch (error) {
+      console.error('Error removing admin:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove admin. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

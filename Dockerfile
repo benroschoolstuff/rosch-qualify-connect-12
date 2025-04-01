@@ -32,8 +32,8 @@ FROM nginx:alpine
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Create a directory for the bot
-RUN mkdir -p /app/bot
+# Create directories for the bot and config
+RUN mkdir -p /app/bot /app/config
 
 # Copy Discord bot from bot stage
 COPY --from=discord-bot /app/bot /app/bot
@@ -43,6 +43,9 @@ RUN apk add --update nodejs npm
 
 # Copy custom nginx config to change port to 8414
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Create an API proxy from nginx to the Express server
+RUN echo 'location /api/ { proxy_pass http://localhost:3000/api/; }' >> /etc/nginx/conf.d/default.conf
 
 # Copy startup script
 COPY start.sh /start.sh

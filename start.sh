@@ -1,16 +1,17 @@
 
 #!/bin/sh
 
+# Create directories
+mkdir -p /app/config
+
+# Start Express API server for Discord configuration
+cd /app/bot && node api-server.js &
+
 # Start nginx in the background
 nginx -g "daemon off;" &
 
-# Start the Discord bot if environment variables are set
-if [ -n "$DISCORD_BOT_TOKEN" ]; then
-  echo "Starting Discord bot..."
-  cd /app/bot && node index.js &
-else
-  echo "Discord bot token not set. Bot will not start."
-fi
+# Start the Discord bot in the background
+cd /app/bot && node index.js &
 
 # Wait for any process to exit
 wait -n
