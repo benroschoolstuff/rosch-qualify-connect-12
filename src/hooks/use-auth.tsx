@@ -94,9 +94,17 @@ export const useAuth = () => {
         console.error('Error checking setup status:', error);
         // If no setup_complete setting found, assume setup not complete
         setSetupComplete(false);
+      } else if (data?.setting_value) {
+        // Check if the setting value has a 'value' property that is true
+        // Fix for the type error by safely checking the structure
+        const settingValue = data.setting_value;
+        if (typeof settingValue === 'object' && settingValue !== null && 'value' in settingValue) {
+          setSetupComplete((settingValue as any).value === true);
+        } else {
+          setSetupComplete(false);
+        }
       } else {
-        // If setting exists, use its value
-        setSetupComplete(data?.setting_value?.value === true);
+        setSetupComplete(false);
       }
     } catch (error) {
       console.error('Error checking setup status:', error);
@@ -116,7 +124,13 @@ export const useAuth = () => {
         console.error('Error loading admin list:', error);
         setAllowedAdmins([]);
       } else if (data?.allowed_admins) {
-        setAllowedAdmins(data.allowed_admins);
+        // Type safety check - ensure we're working with a string array
+        if (Array.isArray(data.allowed_admins)) {
+          setAllowedAdmins(data.allowed_admins as string[]);
+        } else {
+          console.error('allowed_admins is not an array:', data.allowed_admins);
+          setAllowedAdmins([]);
+        }
       } else {
         setAllowedAdmins([]);
       }

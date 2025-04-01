@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,9 +37,19 @@ const Setup = () => {
           .eq('setting_name', 'setup_complete')
           .single();
         
-        if (!error && data?.setting_value?.value === true) {
-          setSetupComplete(true);
-          navigate('/login');
+        if (!error && data?.setting_value) {
+          // Type-safe check for the value property
+          const settingValue = data.setting_value;
+          let isComplete = false;
+          
+          if (typeof settingValue === 'object' && settingValue !== null && 'value' in settingValue) {
+            isComplete = (settingValue as any).value === true;
+          }
+          
+          if (isComplete) {
+            setSetupComplete(true);
+            navigate('/login');
+          }
         }
       } catch (error) {
         console.error('Error checking setup status:', error);
