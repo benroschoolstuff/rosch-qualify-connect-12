@@ -13,8 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
 // Type guard to check if a setting value has a 'value' property that's boolean
-function hasValueProperty(obj: any): obj is { value: boolean } {
-  return typeof obj === 'object' && obj !== null && typeof obj.value === 'boolean';
+function hasValueProperty(obj: unknown): obj is { value: boolean } {
+  return typeof obj === 'object' && obj !== null && 'value' in obj && typeof (obj as any).value === 'boolean';
 }
 
 const Setup = () => {
@@ -44,7 +44,7 @@ const Setup = () => {
         
         if (!error && data?.setting_value) {
           // Type-safe check for the value property
-          const settingValue = data.setting_value as Json;
+          const settingValue = data.setting_value as unknown;
           let isComplete = false;
           
           if (hasValueProperty(settingValue)) {
@@ -123,10 +123,13 @@ const Setup = () => {
           client_id: clientId,
           client_secret: clientSecret,
           guild_id: guildId,
-          allowed_admins: allowedAdmins
+          allowed_admins: allowedAdmins as unknown as Json
         }, { onConflict: 'id' });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving Discord settings:', error);
+        throw error;
+      }
       
       // Try to save to config file through API if available
       if (apiStatus === 'connected') {

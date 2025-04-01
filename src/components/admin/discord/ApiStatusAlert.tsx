@@ -2,11 +2,11 @@
 import React from 'react';
 
 interface ApiStatusAlertProps {
-  apiStatus: 'loading' | 'connected' | 'error';
+  apiStatus: 'loading' | 'connected' | 'error' | 'unknown';
 }
 
 const ApiStatusAlert: React.FC<ApiStatusAlertProps> = ({ apiStatus }) => {
-  if (apiStatus === 'loading') return null;
+  if (apiStatus === 'loading' || apiStatus === 'unknown') return null;
   
   return (
     <>
