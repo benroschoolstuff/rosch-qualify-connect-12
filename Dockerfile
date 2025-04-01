@@ -44,9 +44,6 @@ RUN apk add --update nodejs npm
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create an API proxy from nginx to the Express server
-RUN echo 'location /api/ { proxy_pass http://localhost:3000/api/; }' >> /etc/nginx/conf.d/default.conf
-
 # Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

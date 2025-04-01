@@ -10,6 +10,11 @@ const configDir = path.join(__dirname, '../config');
 // Create Express router
 const router = express.Router();
 
+// GET /api/health - Health check endpoint
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // GET /api/get-config - Get Discord configuration
 router.get('/get-config', (req, res) => {
   try {
