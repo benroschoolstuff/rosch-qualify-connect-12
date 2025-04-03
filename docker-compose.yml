@@ -6,9 +6,11 @@ services:
     build: .
     ports:
       - "8418:8418"
+      - "5432:5432"
     volumes:
       - config-data:/app/config
       - log-data:/var/log
+      - postgres-data:/app/db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8418/api/health"]
@@ -16,7 +18,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=localdbpass
+      - POSTGRES_DB=rosch_qualify
+      - PGDATA=/app/db
 
 volumes:
   config-data:
   log-data:
+  postgres-data:

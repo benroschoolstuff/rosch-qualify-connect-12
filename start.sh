@@ -4,6 +4,21 @@
 # Create directories
 mkdir -p /app/config
 
+# Initialize and start PostgreSQL
+echo "Initializing PostgreSQL..."
+/app/db/init-postgres.sh &
+# Wait for PostgreSQL to start
+sleep 5
+
+# Check if PostgreSQL is running
+pg_isready -h localhost -U postgres
+if [ $? -eq 0 ]; then
+  echo "PostgreSQL is running"
+else
+  echo "PostgreSQL failed to start"
+  exit 1
+fi
+
 # Start Express API server for Discord configuration
 cd /app/bot && node api-server.js > /var/log/api-server.log 2>&1 &
 API_PID=$!
