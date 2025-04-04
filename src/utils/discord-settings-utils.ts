@@ -68,21 +68,12 @@ export const loadDiscordSettings = async (): Promise<DiscordSettings | null> => 
   }
 };
 
-// Check API connection status
+// Check API connection status - Now always returns 'connected' since we're removing the bot
 export const checkApiConnection = async (): Promise<'connected' | 'error'> => {
-  try {
-    const response = await fetch('/api/health', { method: 'GET' });
-    if (response.ok) {
-      return 'connected';
-    } else {
-      return 'error';
-    }
-  } catch (error) {
-    return 'error';
-  }
+  return 'connected';
 };
 
-// Save Discord settings to database and API if connected
+// Save Discord settings to database only (API part removed)
 export const saveDiscordConfig = async (settings: DiscordSettings): Promise<boolean> => {
   try {
     // Ensure settings is in the correct format for Supabase
@@ -100,32 +91,6 @@ export const saveDiscordConfig = async (settings: DiscordSettings): Promise<bool
     if (error) {
       console.error('Error saving to Supabase:', error);
       throw error;
-    }
-    
-    // Try to save to API if connected
-    try {
-      const config = {
-        botToken: settings.bot_token,
-        guildId: settings.guild_id,
-        allowedAdmins: settings.allowed_admins
-      };
-      
-      const response = await fetch('/api/save-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save configuration to API');
-      }
-    } catch (error) {
-      console.error('Error saving to API:', error);
-      sonnerToast.error('Configuration saved to database but could not be saved to the bot. The Discord bot might not receive the changes.', {
-        duration: 5000,
-      });
     }
     
     return true;

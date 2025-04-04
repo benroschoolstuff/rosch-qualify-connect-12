@@ -2,12 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import ApiStatusAlert from './discord/ApiStatusAlert';
-import BotConfigCard from './discord/BotConfigCard';
 import OAuthConfigCard from './discord/OAuthConfigCard';
 import AdminAccessCard from './discord/AdminAccessCard';
 import { 
   loadDiscordSettings, 
-  checkApiConnection, 
   saveDiscordConfig,
   type DiscordSettings as DiscordSettingsType
 } from '@/utils/discord-settings-utils';
@@ -15,27 +13,19 @@ import { supabase } from '@/integrations/supabase/client';
 
 const DiscordSettings = () => {
   const { toast } = useToast();
-  const [botToken, setBotToken] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
-  const [guildId, setGuildId] = useState('');
   const [allowedAdmins, setAllowedAdmins] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiStatus, setApiStatus] = useState<'loading' | 'connected' | 'error'>('loading');
+  const [apiStatus] = useState<'loading' | 'connected' | 'error'>('connected');
   
   useEffect(() => {
     const initializeSettings = async () => {
-      // Check API connection
-      const connectionStatus = await checkApiConnection();
-      setApiStatus(connectionStatus);
-      
       // Load settings from database
       const settings = await loadDiscordSettings();
       if (settings) {
-        setBotToken(settings.bot_token || '');
         setClientId(settings.client_id || '');
         setClientSecret(settings.client_secret || '');
-        setGuildId(settings.guild_id || '');
         setAllowedAdmins(settings.allowed_admins || []);
       }
     };
@@ -48,10 +38,10 @@ const DiscordSettings = () => {
     
     try {
       const settings: DiscordSettingsType = {
-        bot_token: botToken,
+        bot_token: '', // Empty as we're removing the bot
         client_id: clientId,
         client_secret: clientSecret,
-        guild_id: guildId,
+        guild_id: '', // Empty as we're removing the bot
         allowed_admins: allowedAdmins
       };
       
@@ -60,7 +50,7 @@ const DiscordSettings = () => {
       if (saved) {
         toast({
           title: "Settings saved",
-          description: "Discord bot and OAuth settings have been updated.",
+          description: "Discord OAuth settings have been updated.",
         });
       } else {
         throw new Error('Failed to save settings');
@@ -108,17 +98,6 @@ const DiscordSettings = () => {
       
       setAllowedAdmins(updatedAdmins);
       
-      // Save to API if connected
-      const settings: DiscordSettingsType = {
-        bot_token: botToken,
-        client_id: clientId,
-        client_secret: clientSecret,
-        guild_id: guildId,
-        allowed_admins: updatedAdmins
-      };
-      
-      await saveDiscordConfig(settings);
-      
       toast({
         title: "Admin added",
         description: "The Discord user has been added to the admin list.",
@@ -146,17 +125,6 @@ const DiscordSettings = () => {
       
       setAllowedAdmins(updatedAdmins);
       
-      // Save to API if connected
-      const settings: DiscordSettingsType = {
-        bot_token: botToken,
-        client_id: clientId,
-        client_secret: clientSecret,
-        guild_id: guildId,
-        allowed_admins: updatedAdmins
-      };
-      
-      await saveDiscordConfig(settings);
-      
       toast({
         title: "Admin removed",
         description: "The Discord user has been removed from the admin list.",
@@ -174,13 +142,6 @@ const DiscordSettings = () => {
   return (
     <div className="space-y-8">
       <ApiStatusAlert apiStatus={apiStatus} />
-      
-      <BotConfigCard
-        botToken={botToken}
-        setBotToken={setBotToken}
-        guildId={guildId}
-        setGuildId={setGuildId}
-      />
       
       <OAuthConfigCard
         clientId={clientId}
