@@ -28,10 +28,10 @@ const Footer = () => {
               Have questions about our training programs?
             </p>
             <a 
-              href="mailto:info@rosch.uk" 
+              href="mailto:rob.hastingsroblox@outlook.com" 
               className="inline-block mt-4 text-rosch-accent hover:underline"
             >
-              info@rosch.uk
+              rob.hastingsroblox@outlook.com
             </a>
           </div>
         </div>

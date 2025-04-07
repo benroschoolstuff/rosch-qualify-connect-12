@@ -15,21 +15,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Production stage with PostgreSQL
+# Production stage without PostgreSQL
 FROM nginx:alpine
 
-# Install PostgreSQL and required packages
-RUN apk add --update --no-cache postgresql postgresql-client nodejs npm bash
+# Install required packages
+RUN apk add --update --no-cache nodejs npm bash postgresql-client
 
 # Create directories
-RUN mkdir -p /app/config /app/db /var/run/postgresql
-
-# Set environment variables for PostgreSQL
-ENV PGDATA=/app/db
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=localdbpass
-ENV POSTGRES_DB=rosch_qualify
-ENV PGHOST=localhost
+RUN mkdir -p /app/config
 
 # Copy built assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -37,34 +30,12 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create PostgreSQL initialization script
-RUN echo '#!/bin/bash\n\
-if [ ! -d "$PGDATA" ]; then\n\
-  mkdir -p "$PGDATA"\n\
-  chown -R postgres:postgres "$PGDATA"\n\
-  su postgres -c "initdb -D $PGDATA"\n\
-  echo "host all all 0.0.0.0/0 md5" >> "$PGDATA/pg_hba.conf"\n\
-  echo "listen_addresses = '"'*'"'" >> "$PGDATA/postgresql.conf"\n\
-  su postgres -c "pg_ctl -D $PGDATA start"\n\
-  su postgres -c "psql -c \"ALTER USER postgres WITH PASSWORD '"'$POSTGRES_PASSWORD'"';\""\n\
-  su postgres -c "createdb $POSTGRES_DB"\n\
-  echo "PostgreSQL initialized successfully"\n\
-else\n\
-  echo "Using existing PostgreSQL data directory"\n\
-  # Just start the PostgreSQL server\n\
-  su postgres -c "pg_ctl -D $PGDATA start"\n\
-fi\n\
-' > /app/db/init-postgres.sh
-
-# Make the script executable
-RUN chmod +x /app/db/init-postgres.sh
-
 # Copy updated startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
 # Expose ports
-EXPOSE 8418 5432
+EXPOSE 8418
 
-# Run both nginx and PostgreSQL
+# Run nginx
 CMD ["/start.sh"]

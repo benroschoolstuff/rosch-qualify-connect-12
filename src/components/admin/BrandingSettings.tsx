@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +17,6 @@ interface BrandingSettings {
   accentColor: string;
   footerText: string;
   contactEmail: string;
-  contactPhone: string;
   socialLinks: {
     discord: string;
     twitter: string;
@@ -34,8 +32,7 @@ const defaultSettings: BrandingSettings = {
   primaryColor: '#1d4ed8',
   accentColor: '#60a5fa',
   footerText: '© ROSCH.UK. All rights reserved.',
-  contactEmail: 'info@rosch.uk',
-  contactPhone: '+44 (0) 123 456 7890',
+  contactEmail: 'rob.hastingsroblox@outlook.com',
   socialLinks: {
     discord: '',
     twitter: '',
@@ -55,7 +52,6 @@ function isBrandingSettings(obj: unknown): obj is BrandingSettings {
     typeof (obj as any).accentColor === 'string' &&
     typeof (obj as any).footerText === 'string' &&
     typeof (obj as any).contactEmail === 'string' &&
-    typeof (obj as any).contactPhone === 'string' &&
     typeof (obj as any).socialLinks === 'object' &&
     (obj as any).socialLinks !== null
   );
@@ -368,17 +364,6 @@ const BrandingSettings = () => {
                   name="contactEmail"
                   placeholder="Enter contact email"
                   value={settings.contactEmail}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="contactPhone">Contact Phone</Label>
-                <Input
-                  id="contactPhone"
-                  name="contactPhone"
-                  placeholder="Enter contact phone"
-                  value={settings.contactPhone}
                   onChange={handleInputChange}
                 />
               </div>
